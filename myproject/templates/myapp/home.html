@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Home | PLOOKJING{% endblock %}
+
+{% block content %}
+<style>
+  .banner-container {
+    position: relative;
+    width: 100%;
+    height: 90vh;
+    overflow: hidden;
+  }
+  .banner-slides {
+    display: flex;
+    transition: transform 0.7s ease-in-out;
+    height: 100%;
+  }
+  .banner-slide {
+    min-width: 100%;
+    height: 100%;
+    position: relative;
+  }
+  .banner-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .banner-caption {
+    position: absolute;
+    bottom: 30px;
+    left: 40px;
+    background: rgba(13, 63, 49, 0.7);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 400px;
+  }
+  .banner-caption h2 {
+    margin: 0 0 10px;
+    font-size: 2rem;
+  }
+  .banner-caption p {
+    margin: 0 0 10px;
+    font-size: 1.1rem;
+  }
+  .banner-caption a {
+    color: #FB7E2B;
+    text-decoration: underline;
+    font-weight: bold;
+  }
+</style>
+
+<div class="banner-container">
+    <div class="banner-slides">
+      {% for news in news_list %}
+      <div class="banner-slide">
+        <img src="{{ news.image_url }}" alt="{{ news.title }}">
+        <div class="banner-caption">
+          <h2>{{ news.title }}</h2>
+          <p>{{ news.description }}</p>
+          <a href="{{ news.article_url }}" target="_blank">อ่านเพิ่มเติม</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  
+  <style>
+    .banner-container {
+      position: relative;
+      width: 100%;
+      height: 90vh;
+      overflow: hidden;
+    }
+  
+    .banner-slides {
+      display: flex;
+      transition: transform 0.6s ease-in-out;
+      height: 100%;
+    }
+  
+    .banner-slide {
+      min-width: 100%;
+      position: relative;
+    }
+  
+    .banner-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  
+    .banner-caption {
+      position: absolute;
+      bottom: 40px;
+      left: 50px;
+      background: rgba(13, 63, 49, 0.85);
+      color: white;
+      padding: 24px;
+      border-radius: 12px;
+      max-width: 500px;
+    }
+  
+    .banner-caption h2 {
+      margin: 0 0 10px;
+      font-size: 2rem;
+      font-weight: bold;
+    }
+  
+    .banner-caption p {
+      margin: 0 0 12px;
+      font-size: 1.1rem;
+      line-height: 1.5;
+    }
+  
+    .banner-caption a {
+      color: #FB7E2B;
+      font-weight: bold;
+      text-decoration: underline;
+    }
+</style>
+
+<script>
+  let currentSlide = 0;
+  const banners = document.querySelector('.banner-slides');
+  const totalSlides = document.querySelectorAll('.banner-slide').length;
+
+  setInterval(() => {
+    currentSlide = (currentSlide + 1) % totalSlides;
+    banners.style.transform = `translateX(-${currentSlide * 100}%)`;
+  }, 7000);
+</script>
+
+{% endblock %}

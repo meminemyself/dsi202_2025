@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Login | PLOOKJING{% endblock %}
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  .auth-container {
+    max-width: 500px;
+    margin: 4rem auto;
+    padding: 2.5rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    font-family: 'Prompt', sans-serif;
+  }
+  .auth-container h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #0D3F31;
+    font-size: 1.8rem;
+  }
+  .auth-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+  .auth-container label {
+    font-weight: 500;
+    color: #333;
+  }
+  .auth-container input {
+    padding: 0.7rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+  .auth-container button {
+    background: #0D6E3E;
+    color: white;
+    padding: 0.9rem;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  .auth-container button:hover {
+    background: #095C34;
+  }
+  .auth-container .bottom-link {
+    text-align: center;
+    margin-top: 1rem;
+  }
+  .auth-container .bottom-link a {
+    color: #FB7E2B;
+    text-decoration: none;
+    font-weight: 500;
+  }
+</style>
+
+<div class="auth-container">
+  <h2>Login</h2>
+  <form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Login</button>
+  </form>
+  <div class="bottom-link">
+    Don't have an account? <a href="{% url 'signup' %}">Sign up here</a>
+  </div>
+</div>
+{% endblock %}

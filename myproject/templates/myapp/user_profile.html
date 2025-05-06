@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}My Profile | PLOOKJING{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body {
+    background: linear-gradient(to bottom right, #e8f5e9, #d7ccc8);
+    font-family: 'Prompt', sans-serif;
+  }
+
+  .profile-hero {
+    max-width: 960px;
+    margin: 3rem auto;
+    background: #ffffff;
+    border-radius: 32px;
+    padding: 3rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .profile-hero:before {
+    content: '';
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 200px;
+    height: 200px;
+    background: #c8e6c9;
+    border-radius: 50%;
+    z-index: 0;
+  }
+
+  .profile-header {
+    font-size: 2.8rem;
+    color: #0D3F31;
+    font-weight: 800;
+    position: relative;
+    z-index: 1;
+  }
+
+  .profile-details {
+    margin-top: 2rem;
+    font-size: 1.2rem;
+    color: #333;
+    z-index: 1;
+    position: relative;
+  }
+
+  .profile-details p {
+    margin: 0.7rem 0;
+  }
+
+  .profile-grid {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-top: 2.5rem;
+    z-index: 1;
+    position: relative;
+  }
+
+  .profile-button {
+    background: linear-gradient(to right, #2e7d32, #388e3c);
+    color: white;
+    font-weight: bold;
+    padding: 1rem 1.8rem;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 20px rgba(0, 128, 0, 0.25);
+  }
+
+  .profile-button:hover {
+    background: linear-gradient(to right, #1b5e20, #2e7d32);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 128, 0, 0.35);
+  }
+
+  .profile-button.orange {
+    background: linear-gradient(to right, #f57c00, #fb8c00);
+    box-shadow: 0 6px 20px rgba(255, 87, 34, 0.25);
+  }
+
+  .profile-button.orange:hover {
+    background: linear-gradient(to right, #ef6c00, #f57c00);
+    transform: scale(1.05);
+  }
+</style>
+
+<div class="profile-hero">
+  <div class="profile-header"> Welcome, {{ request.user.username }}</div>
+  <div class="profile-details">
+    <p><strong>Email:</strong> {{ request.user.email }}</p>
+    <p><strong>Member Since:</strong> {{ request.user.date_joined|date:"d M Y" }}</p>
+  </div>
+  <div class="profile-grid">
+    <a href="{% url 'my_trees' %}" class="profile-button">My Trees</a>
+    <a href="{% url 'my_orders' %}" class="profile-button">My Orders</a>
+    <a href="{% url 'edit_profile' %}" class="profile-button">Edit Profile</a>
+    <a href="{% url 'logout' %}" class="profile-button orange">Log Out</a>
+  </div>
+</div>
+{% endblock %}

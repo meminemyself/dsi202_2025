@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}โปรไฟล์ของฉัน | PLOOKJING{% endblock %}
+
+{% block content %}
+<h1 style="text-align: center; color: #0D3F31; margin-bottom: 2rem;">ข้อมูลผู้ใช้ของคุณ 🧑‍🌾</h1>
+
+<div class="profile-card">
+  <h2>{{ user.username }}</h2>
+  <p>อีเมล: {{ user.email }}</p>
+  <p>เป็นสมาชิกตั้งแต่: {{ user.date_joined|date:"d M Y" }}</p>
+  <hr>
+  <p>🌳 ต้นไม้ที่ปลูกแล้ว: <strong>{{ planted_trees }}</strong> ต้น</p>
+  <p>🛒 อุปกรณ์ที่ซื้อแล้ว: <strong>{{ purchased_items }}</strong> ชิ้น</p>
+</div>
+
+<style>
+  .profile-card {
+    max-width: 500px;
+    margin: 0 auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    color: #333;
+  }
+
+  .profile-card h2 {
+    margin-bottom: 1rem;
+    color: #D55E02;
+  }
+
+  .profile-card p {
+    margin: 0.5rem 0;
+    font-size: 1.1rem;
+  }
+
+  hr {
+    margin: 1.5rem 0;
+    border: 0;
+    border-top: 1px solid #eee;
+  }
+</style>
+{% endblock %}

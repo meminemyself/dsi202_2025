@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Edit Profile | PLOOKJING{% endblock %}
+{% block content %}
+<style>
+  .edit-profile-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .edit-profile-container h2 {
+    text-align: center;
+    color: #0D3F31;
+    margin-bottom: 1.5rem;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+
+  label {
+    font-weight: bold;
+    color: #333;
+  }
+
+  input, select {
+    padding: 0.6rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+  }
+
+  button {
+    background-color: #D55E02;
+    color: white;
+    padding: 0.8rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background-color: #FB7E2B;
+  }
+</style>
+
+<div class="edit-profile-container">
+  <h2>แก้ไขโปรไฟล์</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">บันทึกการเปลี่ยนแปลง</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home | ปลูกต้นไม้</title>
+  <style>
+    body {
+      font-family: 'Avenir Next Thai Traditional', 'Avenir Next', sans-serif;
+      background-color: #D5E1ED;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+    }
+
+    header {
+      background-color: #D55E02;
+      color: white;
+      width: 100%;
+      text-align: center;
+      padding: 1rem;
+      font-size: 1.8rem;
+      font-weight: bold;
+    }
+
+    .button-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 2rem 1rem;
+      gap: 1rem;
+    }
+
+    .button {
+      background-color: #FB7E2B;
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      text-decoration: none;
+      font-size: 1.2rem;
+      font-weight: bold;
+      text-align: center;
+      width: 250px;
+      transition: background-color 0.3s;
+    }
+
+    .button:hover {
+      background-color: #D55E02;
+    }
+
+    /* 📱 สำหรับมือถือหน้าจอเล็ก */
+    @media (max-width: 480px) {
+      .button {
+        width: 80%;
+        font-size: 1rem;
+        padding: 0.8rem 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>ระบบปลูกต้นไม้</header>
+
+  <div class="button-container">
+    <a href="{% url 'tree_list' %}" class="button">ปลูกต้นไม้</a>
+    <a href="{% url 'equipment_list' %}" class="button">ซื้ออุปกรณ์</a>
+    <a href="{% url 'notification_list' %}" class="button">ดูการแจ้งเตือน</a>
+    <a href="{% url 'select_location' %}" class="button">ปลูกพร้อมเลือกพื้นที่</a>
+  </div>
+</body>
+</html>

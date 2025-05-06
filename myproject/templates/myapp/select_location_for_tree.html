@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% block title %}Select Planting Location | PLOOKJING{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  body {
+    font-family: 'Prompt', sans-serif;
+    background-color: #F6F9FB;
+  }
+
+  .location-page {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  .location-header {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #0D3F31;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+
+  .search-form {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .search-form input {
+    font-family: 'Prompt', sans-serif;
+    padding: 0.7rem 1rem;
+    border-radius: 9999px;
+    border: 2px solid #0D3F31;
+    width: 300px;
+    font-size: 1rem;
+    outline: none;
+  }
+
+  .search-form button {
+    padding: 0.7rem 1.5rem;
+    background-color: #0D6E3E;
+    color: white;
+    border: none;
+    border-radius: 9999px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  .search-form button:hover {
+    background-color: #095C34;
+  }
+
+  .location-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .location-card {
+    background-color: #F3FDF6;
+    border: 1px solid #CCEED4;
+    padding: 1.2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .location-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.1);
+    background-color: #E6FAF0;
+  }
+
+  .location-card h3 {
+    margin: 0 0 0.5rem 0;
+    color: #0D3F31;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .location-card p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #444;
+    line-height: 1.4;
+  }
+
+  .intro-box {
+    text-align: center;
+    font-size: 1rem;
+    padding: 2rem;
+    color: #444;
+    border-top: 1px solid #ddd;
+  }
+
+  .map-placeholder {
+    margin-top: 2rem;
+    padding: 2rem;
+    background: #EFF7F1;
+    text-align: center;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    color: #2E7D32;
+    font-weight: 500;
+    border: 1px dashed #B5D6BB;
+  }
+
+  .contact-link {
+    color: #FB7E2B;
+    text-decoration: none;
+    font-weight: bold;
+  }
+
+  .contact-link:hover {
+    text-decoration: underline;
+  }
+</style>
+
+<div class="location-page">
+  <div class="location-header"> Select a Planting Location</div>
+
+  <form method="get" class="search-form">
+    <input type="text" name="q" value="{{ query }}" placeholder="Search province..." />
+    <button type="submit">Search</button>
+  </form>
+
+  {% if locations %}
+  <div class="location-grid">
+    {% for location in locations %}
+    <div class="location-card" onclick="window.location.href='{% url 'confirm_location' tree.id location.id %}'">
+      <h3>{{ location.name }}</h3>
+      <p>{{ location.description|truncatechars:100 }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="intro-box">
+    No locations available at this time. Please check back later or
+    <a href="{% url 'contact' %}" class="contact-link">contact us</a> if you want to suggest a site.
+  </div>
+  {% endif %}
+
+  <div class="map-placeholder">
+    🗺️ Interactive Thailand Map Coming Soon!<br>
+    You'll be able to click on provinces to select available planting sites.
+  </div>
+</div>
+{% endblock %}

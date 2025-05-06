@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Sign Up | PLOOKJING{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  .signup-box {
+    max-width: 460px;
+    margin: 3rem auto;
+    background: #ffffff;
+    padding: 2rem 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    font-family: 'Prompt', sans-serif;
+  }
+  .signup-box h2 {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #0D3F31;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .signup-box label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #333;
+  }
+  .signup-box input {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-bottom: 1.2rem;
+  }
+  .signup-box button {
+    width: 100%;
+    background: #FB7E2B;
+    color: white;
+    padding: 0.8rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .signup-box button:hover {
+    background: #E76C1C;
+  }
+  .login-link {
+    text-align: center;
+    margin-top: 1rem;
+  }
+  .login-link a {
+    color: #0D6E3E;
+    text-decoration: none;
+    font-weight: bold;
+  }
+</style>
+
+<div class="signup-box">
+  <h2>📝 Sign Up</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Create Account</button>
+  </form>
+
+  <div class="login-link">
+    Already have an account? <a href="{% url 'login' %}">Log in here</a>
+  </div>
+</div>
+{% endblock %}

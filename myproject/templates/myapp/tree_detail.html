@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}{{ tree.name }} | PLOOKJING{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  .detail-page {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 1rem;
+    display: flex;
+    gap: 2rem;
+    font-family: 'Prompt', sans-serif;
+  }
+  .tree-image {
+    flex: 1;
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+  .tree-image img {
+    width: 100%;
+    height: 500px;
+    object-fit: cover;
+  }
+  .tree-info {
+    flex: 1;
+    background: #fff;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .tree-info h1 {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #0D3F31;
+    margin-bottom: 0.5rem;
+  }
+  .rating {
+    color: #FFD700;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+  .price {
+    font-size: 1.5rem;
+    color: #D55E02;
+    font-weight: bold;
+    margin-bottom: 1rem;
+  }
+  .desc {
+    font-size: 1rem;
+    color: #333;
+    margin-bottom: 1.5rem;
+  }
+  .features {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .feature-box {
+    background: #E6F4EA;
+    color: #2F684E;
+    padding: 0.4rem 0.8rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .quantity {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .quantity input {
+    width: 60px;
+    padding: 0.4rem;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+  .action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .action-buttons a {
+    text-align: center;
+    padding: 0.9rem;
+    font-weight: 600;
+    border-radius: 10px;
+    transition: background 0.3s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    text-decoration: none;
+  }
+  .action-buttons a.add-to-cart {
+    background-color: #0D6E3E;
+    color: white;
+  }
+  .action-buttons a.add-to-cart:hover {
+    background-color: #095C34;
+  }
+  .action-buttons a.buy-now {
+    background-color: #FB7E2B;
+    color: white;
+  }
+  .action-buttons a.buy-now:hover {
+    background-color: #E76C1C;
+  }
+</style>
+
+<div class="detail-page">
+  <div class="tree-image">
+    {% if tree.image_url %}
+      <img src="{{ tree.image_url }}" alt="{{ tree.name }}">
+    {% else %}
+      <div class="w-full h-[500px] flex items-center justify-center text-gray-500 bg-gray-100">
+        No Image Available
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="tree-info">
+    <div>
+      <h1>{{ tree.name }}</h1>
+      <div class="rating">
+        ★ {{ tree.average_rating|floatformat:1 }}
+        <span class="text-sm text-gray-500">({{ tree.review_count }} reviews)</span>
+      </div>
+      <div class="price">{{ tree.price|floatformat:2 }} บาท</div>
+      <div class="desc">{{ tree.description }}</div>
+
+      {% if tag_list %}
+      <div class="features">
+        {% for tag in tag_list %}
+          <div class="feature-box">{{ tag }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="quantity">
+        <label for="qty">Quantity:</label>
+        <input type="number" id="qty" name="qty" value="1" min="1">
+      </div>
+    </div>
+
+    <div class="action-buttons">
+      <a href="#" class="add-to-cart" onclick="alert('Item added to cart!')">Add to Cart</a>
+      <a href="{% url 'select_location_for_tree' tree.id %}" class="buy-now">Buy Now</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}My Trees | PLOOKJING{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  .my-trees-container {
+    max-width: 1100px;
+    margin: 3rem auto;
+    font-family: 'Prompt', sans-serif;
+    background: #fff;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  }
+  .my-trees-header {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #0D3F31;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .tree-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 2rem;
+  }
+  .tree-card {
+    background: #F3FDF6;
+    border: 1px solid #CCEED4;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    padding: 1rem;
+    text-align: center;
+    transition: transform 0.2s ease;
+  }
+  .tree-card:hover {
+    transform: translateY(-4px);
+    background-color: #E6FAF0;
+  }
+  .tree-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+  }
+  .tree-card h3 {
+    font-size: 1.2rem;
+    color: #0D3F31;
+    margin-bottom: 0.5rem;
+  }
+  .tree-card p {
+    font-size: 0.95rem;
+    color: #444;
+    margin-bottom: 0.3rem;
+  }
+  .status {
+    display: inline-block;
+    background: #D9F5D4;
+    color: #2F684E;
+    padding: 0.4rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    margin-top: 0.8rem;
+  }
+  .no-tree {
+    text-align: center;
+    font-size: 1.1rem;
+    color: #777;
+    margin-top: 3rem;
+  }
+</style>
+
+<div class="my-trees-container">
+  <div class="my-trees-header"> My Trees</div>
+
+  {% if trees %}
+  <div class="tree-list">
+    {% for tree in trees %}
+    <div class="tree-card">
+      {% if tree.tree.image_url %}
+        <img src="{{ tree.tree.image_url }}" alt="{{ tree.tree.name }}">
+      {% else %}
+        <img src="{% static 'images/default_tree.png' %}" alt="No Image">
+      {% endif %}
+      <h3>{{ tree.tree.name }}</h3>
+      <p><strong>Location:</strong> {{ tree.location.name }}</p>
+      <p><strong>Planted on:</strong> {{ tree.planting_date|date:"d M Y" }}</p>
+      <span class="status">{% if tree.is_completed %}Completed{% else %}In Progress{% endif %}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="no-tree">
+    You haven't planted any trees yet. Start your journey today! 
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
