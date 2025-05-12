@@ -1,134 +1,202 @@
 {% extends 'base.html' %}
-
 {% block title %}Home | PLOOKJING{% endblock %}
 
 {% block content %}
 <style>
-  .banner-container {
-    position: relative;
-    width: 100%;
-    height: 90vh;
+  .hero {
+    background: linear-gradient(120deg, #FB7E2B20, #0D3F3110);
+    padding: 3rem 2rem;
+    border-radius: 20px;
+    text-align: center;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    animation: fadeIn 1s ease;
+  }
+
+  .hero h1 {
+    font-size: 2.5rem;
+    color: var(--green-dark);
+    margin-bottom: 1rem;
+  }
+
+  .hero p {
+    font-size: 1.2rem;
+    color: #444;
+  }
+
+  .featured-tree {
+    background: white;
+    display: flex;
+    flex-wrap: wrap;
+    margin: 3rem 0;
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.05);
     overflow: hidden;
   }
-  .banner-slides {
-    display: flex;
-    transition: transform 0.7s ease-in-out;
-    height: 100%;
-  }
-  .banner-slide {
-    min-width: 100%;
-    height: 100%;
-    position: relative;
-  }
-  .banner-slide img {
-    width: 100%;
-    height: 100%;
+
+  .featured-tree img {
+    flex: 1 1 300px;
     object-fit: cover;
+    width: 100%;
+    max-height: 360px;
   }
-  .banner-caption {
-    position: absolute;
-    bottom: 30px;
-    left: 40px;
-    background: rgba(13, 63, 49, 0.7);
-    color: white;
-    padding: 20px;
-    border-radius: 10px;
-    max-width: 400px;
+
+  .featured-tree .info {
+    flex: 1 1 300px;
+    padding: 2rem;
+    background: linear-gradient(180deg, var(--green-light), #fff);
   }
-  .banner-caption h2 {
-    margin: 0 0 10px;
+
+  .featured-tree h2 {
     font-size: 2rem;
+    color: var(--green-dark);
+    margin-bottom: 0.5rem;
   }
-  .banner-caption p {
-    margin: 0 0 10px;
-    font-size: 1.1rem;
+
+  .featured-tree p {
+    color: #333;
+    font-size: 1rem;
+    line-height: 1.6;
   }
-  .banner-caption a {
-    color: #FB7E2B;
-    text-decoration: underline;
+
+  .featured-tree .price {
+    margin-top: 1rem;
+    font-size: 1.2rem;
     font-weight: bold;
+    color: var(--orange);
+  }
+
+  .news-highlight {
+    margin: 2rem 0;
+  }
+
+  .news-highlight h3 {
+    color: var(--green-dark);
+    font-size: 1.6rem;
+    margin-bottom: 1rem;
+  }
+
+  .news-card {
+    background: white;
+    padding: 1rem;
+    border-radius: 16px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    align-items: center;
+  }
+
+  .news-card img {
+    width: 140px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 12px;
+  }
+
+  .news-card h4 {
+    font-size: 1.1rem;
+    color: var(--green-dark);
+    margin: 0 0 0.3rem;
+  }
+
+  .news-card p {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0;
+  }
+
+  .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+
+  .action-card {
+    background: var(--orange-soft);
+    padding: 1.5rem;
+    border-radius: 16px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease;
+    text-decoration: none;
+  }
+
+  .action-card:hover {
+    transform: translateY(-5px);
+  }
+
+  .action-card i {
+    font-size: 2rem;
+    color: var(--orange);
+    margin-bottom: 0.5rem;
+  }
+
+  .action-card h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--green-dark);
+  }
+
+  .cta-banner {
+    margin-top: 4rem;
+    padding: 2rem;
+    background: linear-gradient(90deg, var(--orange), #FFD4B2);
+    border-radius: 20px;
+    text-align: center;
+    color: white;
+  }
+
+  .cta-banner h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.8rem;
+  }
+
+  .cta-banner a {
+    background-color: white;
+    color: var(--orange);
+    padding: 0.6rem 1.4rem;
+    border-radius: 30px;
+    font-weight: bold;
+    text-decoration: none;
+    margin-top: 1rem;
+    display: inline-block;
+    transition: background-color 0.2s;
+  }
+
+  .cta-banner a:hover {
+    background-color: #f5f5f5;
   }
 </style>
 
-<div class="banner-container">
-    <div class="banner-slides">
-      {% for news in news_list %}
-      <div class="banner-slide">
-        <img src="{{ news.image_url }}" alt="{{ news.title }}">
-        <div class="banner-caption">
-          <h2>{{ news.title }}</h2>
-          <p>{{ news.description }}</p>
-          <a href="{{ news.article_url }}" target="_blank">อ่านเพิ่มเติม</a>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  
-  <style>
-    .banner-container {
-      position: relative;
-      width: 100%;
-      height: 90vh;
-      overflow: hidden;
-    }
-  
-    .banner-slides {
-      display: flex;
-      transition: transform 0.6s ease-in-out;
-      height: 100%;
-    }
-  
-    .banner-slide {
-      min-width: 100%;
-      position: relative;
-    }
-  
-    .banner-slide img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-  
-    .banner-caption {
-      position: absolute;
-      bottom: 40px;
-      left: 50px;
-      background: rgba(13, 63, 49, 0.85);
-      color: white;
-      padding: 24px;
-      border-radius: 12px;
-      max-width: 500px;
-    }
-  
-    .banner-caption h2 {
-      margin: 0 0 10px;
-      font-size: 2rem;
-      font-weight: bold;
-    }
-  
-    .banner-caption p {
-      margin: 0 0 12px;
-      font-size: 1.1rem;
-      line-height: 1.5;
-    }
-  
-    .banner-caption a {
-      color: #FB7E2B;
-      font-weight: bold;
-      text-decoration: underline;
-    }
-</style>
+<div class="hero">
+  <h1>🌿 Welcome to PLOOKJING</h1>
+  <p>ปลูกต้นไม้ สร้างสิ่งแวดล้อม และเปลี่ยนโลกให้ดีขึ้นด้วยมือคุณ</p>
+</div>
 
-<script>
-  let currentSlide = 0;
-  const banners = document.querySelector('.banner-slides');
-  const totalSlides = document.querySelectorAll('.banner-slide').length;
+<div class="quick-actions">
+  <a href="{% url 'tree_list' %}" class="action-card">
+    <i class="fas fa-tree"></i>
+    <h4>เลือกต้นไม้</h4>
+  </a>
+  <a href="{% url 'equipment_list' %}" class="action-card">
+    <i class="fas fa-tools"></i>
+    <h4>อุปกรณ์ปลูก</h4>
+  </a>
+  <a href="{% url 'my_trees' %}" class="action-card">
+    <i class="fas fa-leaf"></i>
+    <h4>ต้นไม้ของฉัน</h4>
+  </a>
+  <a href="{% url 'news_list' %}" class="action-card">
+    <i class="fas fa-newspaper"></i>
+    <h4>ข่าวสารล่าสุด</h4>
+  </a>
+</div>
 
-  setInterval(() => {
-    currentSlide = (currentSlide + 1) % totalSlides;
-    banners.style.transform = `translateX(-${currentSlide * 100}%)`;
-  }, 7000);
-</script>
-
+<div class="cta-banner">
+  <h3>เริ่มปลูกต้นไม้วันนี้ 🌳</h3>
+  <p>ทำให้โลกใบนี้น่าอยู่ขึ้นทีละต้นไม้</p>
+  <a href="{% url 'signup' %}">สมัครสมาชิกเลย</a>
+</div>
 {% endblock %}
