@@ -5,64 +5,85 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}PLOOKJING{% endblock %}</title>
 
-  <!-- โหลด Font Awesome สำหรับไอคอน -->
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
 
   <style>
     :root {
       --green-dark: #0D3F31;
-      --green-soft: #397413;
-      --orange: #D55E02;
-      --bg: #D5E1ED;
+      --green-light: #B6E2C9;
+      --green-bg: #EFFAF3;
+      --orange: #FB7E2B;
+      --orange-soft: #FFE3CF;
+      --gray: #f8f8f8;
+    }
+
+    * {
+      box-sizing: border-box;
     }
 
     body {
       margin: 0;
-      font-family: 'Avenir Next Thai Traditional', 'Avenir Next', sans-serif;
-      background-color: var(--bg);
+      font-family: 'Prompt', sans-serif;
+      background-color: var(--green-bg);
+      color: #333;
+      scroll-behavior: smooth;
+    }
+
+    @keyframes slideDown {
+      0% {
+        transform: translateY(-100%);
+        opacity: 0;
+      }
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
     }
 
     header.navbar {
-      background-color: var(--orange);
+      background: linear-gradient(90deg, var(--green-dark), #3FA97B);
       color: white;
       padding: 1rem 2rem;
-      border-bottom: 5px solid #fff3e0;
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-    }
-
-    .left-menu {
-      display: flex;
-      align-items: center;
-      gap: 2rem;
+      border-bottom: 4px solid var(--orange);
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      animation: slideDown 0.5s ease-in-out;
     }
 
     .logo {
-      font-size: 1.8rem;
+      font-size: 2rem;
       font-weight: bold;
       color: white;
       text-decoration: none;
     }
 
-    nav.nav-menu {
+    .nav-menu {
       display: flex;
-      gap: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1.2rem;
     }
 
-    nav.nav-menu a {
+    .nav-menu a {
       color: white;
-      text-decoration: none;
       font-weight: 500;
       font-size: 1rem;
-      border-radius: 20px;
-      padding: 0.4rem 1rem;
-      transition: background 0.2s ease;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      transition: all 0.3s ease;
     }
 
-    nav.nav-menu a:hover {
-      background-color: rgba(255, 255, 255, 0.15);
+    .nav-menu a:hover {
+      background-color: var(--orange);
+      color: white;
     }
 
     .right-menu {
@@ -91,24 +112,22 @@
     }
 
     .search-bar button {
-      background-color: var(--green-soft);
+      background-color: var(--green-dark);
       color: white;
       border: none;
       padding: 0.4rem 0.9rem;
       border-radius: 20px;
       font-size: 0.9rem;
       cursor: pointer;
-      transition: background-color 0.2s ease;
     }
 
     .search-bar button:hover {
-      background-color: var(--green-dark);
+      background-color: var(--orange);
     }
 
     .profile-link {
       background: none;
       color: white;
-      text-decoration: none;
       font-size: 1.5rem;
       display: flex;
       align-items: center;
@@ -117,11 +136,17 @@
     }
 
     .profile-link:hover {
-      color: #FFD6B0;
+      color: var(--orange-soft);
     }
 
     main {
       padding: 2rem;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     @media (max-width: 768px) {
@@ -129,19 +154,16 @@
         flex-direction: column;
         align-items: flex-start;
       }
-
       .right-menu {
         flex-direction: column;
         align-items: flex-start;
         width: 100%;
         gap: 0.5rem;
       }
-
       .search-bar {
         width: 100%;
       }
-
-      nav.nav-menu {
+      .nav-menu {
         flex-wrap: wrap;
         gap: 1rem;
         margin-top: 0.5rem;
@@ -151,39 +173,32 @@
 </head>
 
 <body>
+  <header class="navbar animated-navbar">
+    <div class="left-menu">
+      <a href="{% url 'home' %}" class="logo">PLOOKJING</a>
+      <nav class="nav-menu">
+        <a href="{% url 'tree_list' %}"><i class="fas fa-tree"></i> Trees</a>
+        <a href="{% url 'equipment_list' %}"><i class="fas fa-tools"></i> Equipments</a>
+        <a href="{% url 'news_list' %}"><i class="fas fa-newspaper"></i> News</a>
+        <a href="{% url 'notification_list' %}"><i class="fas fa-bell"></i> Alerts</a>
+        <a href="{% url 'about' %}"><i class="fas fa-info-circle"></i> About</a>
+      </nav>
+    </div>
 
-<header class="navbar">
-  <div class="left-menu">
-    <a href="{% url 'home' %}" class="logo">PLOOKJING</a>
-    <nav class="nav-menu">
-      <a href="{% url 'tree_list' %}">Trees</a>
-      <a href="{% url 'equipment_list' %}">Equipments</a> 
-      <a href="{% url 'news_list' %}">News</a>
-      <a href="{% url 'notification_list' %}">Alerts</a>
-      <a href="{% url 'about' %}">About</a>     
-    </nav>
-  </div>
+    <div class="right-menu">
+      <form action="{% url 'search_results' %}" method="GET" class="search-bar">
+        <input type="text" name="q" placeholder="Search..." required />
+        <button type="submit"><i class="fas fa-search"></i></button>
+      </form>
+      <a href="{% url 'user_profile' %}" class="profile-link">
+        <i class="fas fa-user-circle"></i>
+      </a>
+    </div>
+  </header>
 
-  <div class="right-menu">
-    <form action="{% url 'search_results' %}" method="GET" class="search-bar">
-      <input type="text" name="q" placeholder="Search..." required />
-      <button type="submit"><i class="fas fa-search"></i></button>
-    </form>
-  
-    {% if user.is_authenticated %}
-     <a href="{% url 'user_profile' %}" class="profile-link"><i class="fas fa-user"></i></a>
-     <a href="{% url 'logout' %}" class="logout-link">Logout</a>
-    {% else %}
-     <a href="{% url 'login' %}" class="login-link">Login</a>
-    <a href="{% url 'signup' %}" class="signup-link">Sign Up</a>
-    {% endif %}
-  </div>
-</header>
-
-<main>
-  {% block content %}
-  {% endblock %}
-</main>
-
+  <main>
+    {% block content %}
+    {% endblock %}
+  </main>
 </body>
 </html>
