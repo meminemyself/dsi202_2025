@@ -4,21 +4,28 @@ from django.utils import timezone
 from .models import Tree, Equipment, PlantingLocation, UserPlanting, Notification, NewsArticle , Purchase # อย่าลืม import
 from django.db.models import Q  # เพิ่ม Q สำหรับค้นหาแบบ flexible
 
-def home(request):
-    return render(request, 'myapp/home.html')
+
+from .models import Tree
 
 def tree_list(request):
     sort = request.GET.get('sort')
-    if sort:
-        trees = Tree.objects.all().order_by(sort)
+    if sort in ['name', 'price', '-price']:
+        trees = Tree.objects.order_by(sort)
     else:
         trees = Tree.objects.all()
+
+    query = request.GET.get('q')
+    if query:
+        trees = trees.filter(name__icontains=query)
 
     recommended_trees = Tree.objects.order_by('?')[:3]
     return render(request, 'myapp/tree_list.html', {
         'trees': trees,
-        'recommended_trees': recommended_trees
+        'recommended_trees': recommended_trees,
+        'selected_sort': sort,
+        'query': query,
     })
+  
 
 def tree_detail(request, tree_id):
     tree = get_object_or_404(Tree, id=tree_id)
@@ -181,8 +188,12 @@ def plant_tree(request, tree_id, location_id):
     })
 
 def home(request):
-    news_list = NewsArticle.objects.all().order_by('-created_at')[:5]  # เอาข่าวใหม่สุด
-    return render(request, 'myapp/home.html', {'news_list': news_list})
+    news_list = NewsArticle.objects.all().order_by('-created_at')[:5]
+    featured_tree = Tree.objects.order_by('?').first()  # สุ่มต้นไม้ 1 ต้น
+    return render(request, 'myapp/home.html', {
+        'news_list': news_list,
+        'featured_tree': featured_tree
+    })
 
 def contact(request):
     return render(request, 'myapp/contact.html')
@@ -262,3 +273,6 @@ def signup(request):
     else:
         form = UserCreationForm()
     return render(request, 'myapp/signup.html', {'form': form})
+
+def planting_plan(request):
+    return render(request, 'myapp/planting_plan.html')

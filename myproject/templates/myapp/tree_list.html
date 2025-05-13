@@ -3,10 +3,16 @@
 
 {% block content %}
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
+
 <style>
   body {
     font-family: 'Prompt', sans-serif;
-    background-color: #F3F6F9;
+    background-color: #EFFAF3;
+  }
+
+  a {
+    text-decoration: none !important;
   }
 
   .page-layout {
@@ -17,18 +23,18 @@
 
   .sidebar {
     width: 280px;
-    background: #ffffff;
+    background: white;
     border-radius: 16px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
     padding: 2rem 1.5rem;
     position: sticky;
     top: 6rem;
     height: fit-content;
-    border: 1px solid #0D3F31;
+    border-left: 5px solid #FB7E2B;
   }
 
   .sidebar h2 {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
     color: #0D3F31;
     margin-bottom: 1.5rem;
     border-bottom: 2px solid #0D3F31;
@@ -37,11 +43,11 @@
 
   .recommended-item {
     margin-bottom: 1.5rem;
-    background: #ffffff;
+    background: #fff7f0;
     border-radius: 12px;
     overflow: hidden;
-    border: 1px solid #0D3F31;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid #FB7E2B;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
     transition: box-shadow 0.3s ease;
   }
 
@@ -93,7 +99,6 @@
     border-radius: 16px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     overflow: hidden;
-    text-decoration: none;
     color: inherit;
     display: flex;
     flex-direction: column;
@@ -127,7 +132,7 @@
   }
 
   .tree-info .price {
-    color: #D55E02;
+    color: #FB7E2B;
     font-weight: bold;
     font-size: 0.95rem;
   }
@@ -142,8 +147,8 @@
   }
 
   .tree-info .tag {
-    background: #E6F4EA;
-    color: #397413;
+    background: #FFF2E5;
+    color: #D55E02;
     font-size: 0.75rem;
     padding: 0.2rem 0.5rem;
     border-radius: 8px;
@@ -165,8 +170,30 @@
   }
 </style>
 
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+  AOS.init();
+</script>
+
+<div class="filters" data-aos="fade-up" style="margin-top: 1rem;">
+  <form method="get" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; background: white; padding: 1rem 1.5rem; border-radius: 16px; box-shadow: 0 6px 14px rgba(0,0,0,0.05); border-left: 5px solid #FB7E2B;">
+    <input type="text" name="q" placeholder="ค้นหาต้นไม้..." value="{{ request.GET.q }}" style="flex: 2; min-width: 200px; padding: 0.6rem 1rem; font-size: 1rem; border-radius: 12px; border: 1px solid #ccc; background: #F9FCFB;">
+
+    <label for="sort" style="font-weight: 600; color: #0D3F31;">เรียงตาม:</label>
+    <select name="sort" id="sort" onchange="this.form.submit()" style="padding: 0.6rem 1rem; font-size: 1rem; border-radius: 12px; border: 1px solid #ccc; background: white; color: #0D3F31;">
+      <option value="name" {% if selected_sort == 'name' %}selected{% endif %}>ชื่อ</option>
+      <option value="price" {% if selected_sort == 'price' %}selected{% endif %}>ราคาต่ำไปสูง</option>
+      <option value="-price" {% if selected_sort == '-price' %}selected{% endif %}>ราคาสูงไปต่ำ</option>
+    </select>
+
+    <button type="submit" style="background-color: #FB7E2B; color: white; border: none; padding: 0.6rem 1.6rem; border-radius: 12px; font-size: 1rem; cursor: pointer; transition: background-color 0.3s ease;" onmouseover="this.style.backgroundColor='#0D3F31'" onmouseout="this.style.backgroundColor='#FB7E2B'">
+      <i class="fas fa-search"></i>
+    </button>
+  </form>
+</div>
+
 <div class="page-layout">
-  <aside class="sidebar">
+  <aside class="sidebar" data-aos="fade-right">
     <h2>Recommended</h2>
     {% for tree in recommended_trees %}
       <div class="recommended-item">
@@ -179,18 +206,9 @@
   </aside>
 
   <section class="tree-section">
-    <div class="filters">
-      <form method="GET">
-        <label for="sort">เรียงตาม:</label>
-        <select name="sort" id="sort">
-          <option value="name">ชื่อ</option>
-          <option value="price">ราคาต่ำไปสูง</option>
-          <option value="-price">ราคาสูงไปต่ำ</option>
-        </select>
-      </form>
-    </div>
-
+    <div class="filters"></div>
     <div class="tree-grid">
+      {% if trees %}
         {% for tree in trees %}
           <a href="{% url 'tree_detail' tree.id %}" class="tree-card">
             {% if tree.image_url %}
@@ -210,7 +228,12 @@
             </div>
           </a>
         {% endfor %}
-      </div>
+      {% else %}
+        <p class="no-results" style="grid-column: 1 / -1; text-align: center; font-style: italic; color: #888;">
+          ไม่พบต้นไม้ที่ตรงกับคำค้นหา
+        </p>
+      {% endif %}
+    </div>
   </section>
 </div>
 {% endblock %}
