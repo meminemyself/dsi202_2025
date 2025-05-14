@@ -2,73 +2,98 @@
 {% block title %}Sign Up | PLOOKJING{% endblock %}
 
 {% block content %}
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
-
 <style>
-  .signup-box {
-    max-width: 460px;
+  .signup-container {
+    max-width: 500px;
     margin: 3rem auto;
-    background: #ffffff;
-    padding: 2rem 2.5rem;
-    border-radius: 16px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    padding: 2.5rem;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.06);
     font-family: 'Prompt', sans-serif;
   }
-  .signup-box h2 {
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: #0D3F31;
+
+  .signup-container h2 {
     text-align: center;
+    font-size: 2rem;
+    color: var(--green-dark);
     margin-bottom: 2rem;
   }
-  .signup-box label {
+
+  .signup-container label {
     display: block;
+    margin-bottom: 0.3rem;
     font-weight: 500;
-    margin-bottom: 0.5rem;
     color: #333;
   }
-  .signup-box input {
+
+  .signup-container input {
     width: 100%;
-    padding: 0.6rem;
+    padding: 0.7rem 1rem;
     border: 1px solid #ccc;
-    border-radius: 8px;
+    border-radius: 10px;
     margin-bottom: 1.2rem;
+    font-size: 1rem;
   }
-  .signup-box button {
+
+  .signup-container button {
     width: 100%;
-    background: #FB7E2B;
+    background-color: #FB7E2B;
     color: white;
-    padding: 0.8rem;
-    font-weight: bold;
     border: none;
-    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    padding: 0.9rem;
+    border-radius: 999px;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: background-color 0.3s ease;
   }
-  .signup-box button:hover {
-    background: #E76C1C;
+
+  .signup-container button:hover {
+    background-color: #e76c1c;
   }
-  .login-link {
+
+  .signup-container .helptext {
+    font-size: 0.85rem;
+    color: #777;
+    margin-top: -0.8rem;
+    margin-bottom: 1rem;
+  }
+
+  .already {
     text-align: center;
     margin-top: 1rem;
+    font-size: 0.9rem;
   }
-  .login-link a {
-    color: #0D6E3E;
-    text-decoration: none;
-    font-weight: bold;
+
+  .already a {
+    color: var(--green-dark);
+    text-decoration: underline;
   }
 </style>
 
-<div class="signup-box">
-  <h2>📝 Sign Up</h2>
+<div class="signup-container">
+  <h2>🌿 Sign Up</h2>
   <form method="post">
     {% csrf_token %}
-    {{ form.as_p }}
+    {{ form.non_field_errors }}
+
+    {% for field in form %}
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.help_text %}
+        <div class="helptext">{{ field.help_text }}</div>
+      {% endif %}
+      {% for error in field.errors %}
+        <div style="color: red; font-size: 0.85rem;">{{ error }}</div>
+      {% endfor %}
+    {% endfor %}
+
     <button type="submit">Create Account</button>
   </form>
 
-  <div class="login-link">
-    Already have an account? <a href="{% url 'login' %}">Log in here</a>
+  <div class="already">
+    Already have an account? <a href="{% url 'login' %}">Log in</a>
   </div>
 </div>
 {% endblock %}

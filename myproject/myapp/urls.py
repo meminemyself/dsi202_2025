@@ -50,4 +50,5 @@ urlpatterns = [
     path('remove-from-cart/<int:tree_id>/', views.remove_from_cart, name='remove_from_cart'),
     path('update-cart/<int:tree_id>/', views.update_cart, name='update_cart'),
     path('start-planting/', views.start_planting_redirect, name='start_planting_redirect'),
+    path('signup/', views.signup, name='signup'),
 ]

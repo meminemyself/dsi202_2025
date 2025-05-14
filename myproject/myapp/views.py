@@ -3,7 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from .models import Tree, Equipment, PlantingLocation, UserPlanting, Notification, NewsArticle , Purchase # อย่าลืม import
 from django.db.models import Q  # เพิ่ม Q สำหรับค้นหาแบบ flexible
-
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login
 
 def tree_list(request):
     sort = request.GET.get('sort')
@@ -345,3 +346,14 @@ def start_planting_redirect(request):
     if tree_id:
         return redirect('select_location_for_tree', tree_id=tree_id)
     return redirect('cart')  # ถ้าไม่มี tree_id
+
+def signup(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('home')  # หรือ redirect ไป my_trees ก็ได้
+    else:
+        form = UserCreationForm()
+    return render(request, 'myapp/signup.html', {'form': form})
