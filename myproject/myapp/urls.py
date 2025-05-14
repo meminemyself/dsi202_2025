@@ -44,4 +44,10 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='myapp/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='home'), name='logout'),
     path('signup/', views.signup, name='signup'),
+    path('planting-plan/', views.planting_plan, name='planting_plan'),
+    path('add-to-cart/<int:tree_id>/', views.add_to_cart, name='add_to_cart'),
+    path('cart/', views.cart_view, name='cart'),
+    path('remove-from-cart/<int:tree_id>/', views.remove_from_cart, name='remove_from_cart'),
+    path('update-cart/<int:tree_id>/', views.update_cart, name='update_cart'),
+    path('start-planting/', views.start_planting_redirect, name='start_planting_redirect'),
 ]
