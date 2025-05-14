@@ -190,7 +190,14 @@
         <input type="text" name="q" placeholder="Search..." required />
         <button type="submit"><i class="fas fa-search"></i></button>
       </form>
-      <a href="{% url 'user_profile' %}" class="profile-link">
+    
+      <!-- รถเข็น -->
+      <a href="{% url 'cart' %}" class="profile-link" title="Cart">
+        <i class="fas fa-shopping-cart"></i>
+      </a>
+    
+      <!-- โปรไฟล์ -->
+      <a href="{% url 'user_profile' %}" class="profile-link" title="Profile">
         <i class="fas fa-user-circle"></i>
       </a>
     </div>
