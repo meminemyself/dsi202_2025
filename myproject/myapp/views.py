@@ -5,8 +5,6 @@ from .models import Tree, Equipment, PlantingLocation, UserPlanting, Notificatio
 from django.db.models import Q  # เพิ่ม Q สำหรับค้นหาแบบ flexible
 
 
-from .models import Tree
-
 def tree_list(request):
     sort = request.GET.get('sort')
     if sort in ['name', 'price', '-price']:
@@ -30,9 +28,13 @@ def tree_list(request):
 def tree_detail(request, tree_id):
     tree = get_object_or_404(Tree, id=tree_id)
     tag_list = [t.strip() for t in tree.tags.split(',')] if tree.tags else []
+
+    similar_trees = Tree.objects.filter(tags__icontains=tag_list[0]).exclude(id=tree_id)[:4] if tag_list else []
+
     return render(request, 'myapp/tree_detail.html', {
         'tree': tree,
-        'tag_list': tag_list
+        'tag_list': tag_list,
+        'similar_trees': similar_trees,
     })
 
 def equipment_list(request):
@@ -136,7 +138,6 @@ def edit_profile(request):
 
     return render(request, 'myapp/edit_profile.html', {'form': form})
 
-from .models import NewsArticle  # อย่าลืม import
 
 def news_list(request):
     news = NewsArticle.objects.all().order_by('-published_date')  # เรียงข่าวใหม่สุดก่อน
@@ -276,3 +277,71 @@ def signup(request):
 
 def planting_plan(request):
     return render(request, 'myapp/planting_plan.html')
+
+
+def add_to_cart(request, tree_id):
+    if request.method == 'POST':
+        quantity = int(request.POST.get('quantity', 1))
+        tree = get_object_or_404(Tree, id=tree_id)
+
+        cart = request.session.get('cart', [])
+        cart.append({'id': tree.id, 'qty': quantity})
+        request.session['cart'] = cart
+
+        return redirect('cart')
+    else:
+        return redirect('tree_detail', tree_id=tree_id)
+
+def cart_view(request):
+    cart = request.session.get('cart', [])
+    cart_items = []
+    cart_total = 0
+
+    for item in cart:
+        tree = Tree.objects.get(id=item['id'])
+        quantity = item.get('qty', 1)
+        total_price = tree.price * quantity
+        cart_items.append({
+            'tree': tree,
+            'quantity': quantity,
+            'total_price': total_price,
+        })
+        cart_total += total_price
+
+    context = {
+        'cart_items': cart_items,
+        'cart_total': cart_total
+    }
+    return render(request, 'myapp/cart.html', context)
+
+def remove_from_cart(request, tree_id):
+    cart = request.session.get('cart', [])
+    cart = [item for item in cart if item['id'] != tree_id]
+    request.session['cart'] = cart
+    return redirect('cart')
+
+from django.views.decorators.http import require_POST
+
+@require_POST
+def update_cart(request, tree_id):
+    action = request.POST.get('action')
+    cart = request.session.get('cart', [])
+
+    for item in cart:
+        if item['id'] == tree_id:
+            if action == 'increase':
+                item['qty'] += 1
+            elif action == 'decrease':
+                item['qty'] -= 1
+                if item['qty'] <= 0:
+                    cart.remove(item)
+            break
+
+    request.session['cart'] = cart
+    return redirect('cart')
+
+def start_planting_redirect(request):
+    tree_id = request.POST.get('tree_id')
+    if tree_id:
+        return redirect('select_location_for_tree', tree_id=tree_id)
+    return redirect('cart')  # ถ้าไม่มี tree_id
