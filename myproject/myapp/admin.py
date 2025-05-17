@@ -36,12 +36,23 @@ class NotificationAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'message')
     list_filter = ('is_read',)
 
-
 @admin.register(Purchase)
 class PurchaseAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'equipment', 'quantity', 'purchase_date')
-    search_fields = ('user__username', 'equipment__name')
-    list_filter = ('purchase_date',)
+    list_display = (
+        'user', 'equipment', 'quantity', 'name', 'tel', 'display_status',
+        'tracking_number', 'created_at', 'payment_slip'
+    )
+    list_filter = ('status', 'created_at')
+    readonly_fields = ('created_at',)
+    fields = (
+        'user', 'equipment', 'quantity',
+        'name', 'tel', 'address',  # เพิ่มฟิลด์ข้อมูลลูกค้า
+        'status', 'payment_slip', 'tracking_number', 'created_at'
+    )
+
+    def display_status(self, obj):
+        return dict(Purchase._meta.get_field('status').choices).get(obj.status)
+    display_status.short_description = 'สถานะ'
 
 
 @admin.register(NewsArticle)

@@ -76,7 +76,7 @@
     border-radius: 12px;
   }
 
-  .confirm-btn, .upload-btn {
+  .upload-btn {
     margin-top: 1.5rem;
     display: block;
     width: 100%;
@@ -89,9 +89,10 @@
     border-radius: 12px;
     cursor: pointer;
     transition: background 0.3s ease;
+    font-family: 'Prompt', sans-serif;
   }
 
-  .confirm-btn:hover {
+  .upload-btn:hover {
     background-color: #095C34;
   }
 
@@ -100,6 +101,40 @@
     opacity: 0.5;
     background: #ccc;
     cursor: not-allowed;
+  }
+
+  .link-later {
+    display: block;
+    text-align: center;
+    margin-top: 1rem;
+    color: #FB7E2B;
+    text-decoration: underline;
+    font-size: 0.95rem;
+  }
+
+  .clear-btn {
+    background: none;
+    border: none;
+    font-size: 0.9rem;
+    color: #000;
+    margin-left: 0.4rem;
+    cursor: pointer;
+  }
+
+  .file-row {
+    display: flex;
+    align-items: center;
+    margin-top: 0.5rem;
+  }
+
+  .file-label {
+    display: block;
+    margin-top: 1.5rem;
+    font-family: 'Prompt', sans-serif;
+  }
+
+  .file-label span {
+    color: red;
   }
 </style>
 
@@ -135,33 +170,26 @@
     <p id="countdown" style="font-weight: bold; color: #FB7E2B;"></p>
   </div>
 
-  <form method="post" action="{% url 'confirm_equipment_payment' equipment.id %}?qty={{ qty }}" enctype="multipart/form-data">
+  <form method="post" action="{% url 'create_pending_order' equipment.id %}" id="createOrderLaterForm">
     {% csrf_token %}
     <input type="hidden" name="name" value="{{ name }}">
     <input type="hidden" name="tel" value="{{ tel }}">
     <input type="hidden" name="address" value="{{ full_address }}">
-    
-    <label style="display:block; margin-top:1.5rem;">แนบหลักฐานการชำระเงิน (ถ้ามี):</label>
-    <input type="file" name="payment_slip" accept="image/*" style="margin-top: 0.5rem;">
-
-    <button type="submit" class="upload-btn">แจ้งการชำระเงิน</button>
+    <input type="hidden" name="qty" value="{{ qty }}">
+    <button type="submit" class="upload-btn">ยืนยันคำสั่งซื้อ</button>
   </form>
 </div>
 
 <script>
   let seconds = 300;
+  const countdownEl = document.getElementById('countdown');
+
   function updateCountdown() {
-    const countdownEl = document.getElementById('countdown');
-    const btn = document.querySelector('.confirm-btn');
     if (seconds <= 0) {
-      countdownEl.textContent = "QR Code หมดอายุ กรุณาสร้างรายการใหม่";
-      if (btn) {
-        btn.classList.add("disabled");
-        btn.textContent = "หมดเวลา";
-      }
+      alert("QR Code หมดอายุแล้ว กรุณาเริ่มการสั่งซื้อใหม่อีกครั้ง");
+      window.location.href = "{% url 'equipment_list' %}";
       return;
     }
-
     const minutes = Math.floor(seconds / 60);
     const sec = seconds % 60;
     countdownEl.textContent = `QR Code จะหมดอายุใน ${minutes}:${sec.toString().padStart(2, '0')} นาที`;
@@ -169,5 +197,46 @@
     setTimeout(updateCountdown, 1000);
   }
   updateCountdown();
+
+  const slipInput = document.getElementById('paymentSlip');
+  const submitBtn = document.getElementById('submitBtn');
+  const clearBtn = document.getElementById('clearBtn');
+
+  slipInput.addEventListener('change', function () {
+    if (slipInput.files.length > 0) {
+      submitBtn.disabled = false;
+      submitBtn.classList.remove("disabled");
+      clearBtn.style.display = 'inline';
+    } else {
+      submitBtn.disabled = true;
+      submitBtn.classList.add("disabled");
+      clearBtn.style.display = 'none';
+    }
+  });
+
+  function clearFile() {
+    slipInput.value = '';
+    const newInput = slipInput.cloneNode(true);
+    slipInput.parentNode.replaceChild(newInput, slipInput);
+    newInput.id = 'paymentSlip';
+    newInput.name = 'payment_slip';
+    newInput.accept = 'image/*';
+
+    newInput.addEventListener('change', function () {
+      if (newInput.files.length > 0) {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("disabled");
+        clearBtn.style.display = 'inline';
+      } else {
+        submitBtn.disabled = true;
+        submitBtn.classList.add("disabled");
+        clearBtn.style.display = 'none';
+      }
+    });
+
+    submitBtn.disabled = true;
+    submitBtn.classList.add("disabled");
+    clearBtn.style.display = 'none';
+  }
 </script>
 {% endblock %}

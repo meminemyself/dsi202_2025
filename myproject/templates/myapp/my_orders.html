@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}My Equipment Orders | PLOOKJING{% endblock %}
+{% block title %}คำสั่งซื้อของฉัน | PLOOKJING{% endblock %}
 
 {% block content %}
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
@@ -9,7 +9,7 @@
     background-color: #F3F6F9;
   }
   .orders-page {
-    max-width: 1100px;
+    max-width: 1080px;
     margin: 2rem auto;
     padding: 2rem;
   }
@@ -17,66 +17,189 @@
     font-size: 2rem;
     font-weight: bold;
     color: #0D3F31;
+    margin-bottom: 1.5rem;
+  }
+  .status-filter {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
     margin-bottom: 2rem;
   }
-  .order-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 2rem;
+  .status-tab {
+    padding: 0.6rem 1.2rem;
+    background: #E6F4EC;
+    color: #0D6E3E;
+    border-radius: 8px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: 0.3s ease;
+    border: 2px solid transparent;
   }
-  .order-card {
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-    overflow: hidden;
-    border: 1px solid #ddd;
+  .status-tab:hover {
+    background: #CCE9DB;
+  }
+  .status-tab.active {
+    background: #FB7E2B;
+    color: white;
+    border-color: #FB7E2B;
+  }
+  .order-list {
     display: flex;
     flex-direction: column;
+    gap: 1rem;
   }
-  .order-card img {
-    width: 100%;
-    height: 200px;
+  .order-item {
+    background: white;
+    padding: 1rem 1.2rem;
+    border-radius: 14px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    border-left: 6px solid #EFFAF3;
+    transition: 0.2s ease;
+  }
+  .order-item:hover {
+    background-color: #FAFFFC;
+  }
+  .order-item img {
+    width: 80px;
+    height: 80px;
     object-fit: cover;
+    border-radius: 10px;
+    margin-right: 1rem;
   }
-  .order-info {
-    padding: 1rem;
+  .order-summary {
     display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
+    align-items: center;
+    flex: 1;
+    gap: 1rem;
   }
-  .order-info h3 {
-    font-size: 1.1rem;
-    color: #0D3F31;
+  .order-info h4 {
+    font-size: 1rem;
     margin: 0;
+    color: #0D3F31;
   }
-  .order-info .price {
-    color: #D55E02;
+  .order-info p {
+    font-size: 0.9rem;
+    margin: 0.2rem 0 0;
+    color: #666;
+  }
+  .order-status {
     font-weight: bold;
     font-size: 0.95rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    display: inline-block;
   }
-  .order-info .detail {
+  .status-pending { background: #FFF1E5; color: #FB7E2B; }
+  .status-preparing { background: #FFF9DB; color: #B28A00; }
+  .status-shipping { background: #E0F2FF; color: #0277BD; }
+  .status-delivered { background: #E6F4EC; color: #0D6E3E; }
+  .status-cancelled, .status-expired { background: #FFECEC; color: #D55E02; }
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+  }
+  .modal-content {
+    background-color: #fff;
+    margin: 5% auto;
+    padding: 2rem;
+    border-radius: 14px;
+    max-width: 540px;
+    position: relative;
+    font-family: 'Prompt', sans-serif;
+  }
+  .close {
+    position: absolute;
+    top: 0.8rem;
+    right: 1rem;
+    font-size: 2.2rem;
+    color: #999;
+    cursor: pointer;
+  }
+  .action-btn {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
     font-size: 0.9rem;
-    color: #555;
+    margin: 0.3rem 0.2rem 0;
+    font-weight: 600;
+    text-decoration: none;
+    font-family: 'Prompt', sans-serif;
+    border: none;
   }
+  .btn-slip { background: #FFF1E5; color: #FB7E2B; cursor: pointer; }
+  .btn-cancel { background: #FFECE8; color: #D55E02; }
 </style>
 
 <div class="orders-page">
-  <div class="orders-header"> My Equipment Orders</div>
-
-  <div class="order-grid">
+  <div class="orders-header">คำสั่งซื้อของฉัน</div>
+  <div class="status-filter">
+    {% for status, label, css_class in status_list %}
+      <a href="?status={{ status }}" class="status-tab {% if request.GET.status == status %}active{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </div>
+  <div class="order-list">
     {% for order in purchases %}
-      <div class="order-card">
-        <img src="{{ order.equipment.image_url }}" alt="{{ order.equipment.name }}">
-        <div class="order-info">
-          <h3>{{ order.equipment.name }}</h3>
-          <div class="price">{{ order.equipment.price|floatformat:2 }} บาท</div>
-          <div class="detail">Quantity: {{ order.quantity }}</div>
-          <div class="detail">Purchased on: {{ order.purchase_date|date:"d M Y" }}</div>
+      <div class="order-item" onclick="openModal('{{ order.id }}')">
+        <div class="order-summary">
+          <img src="{{ order.equipment.image_url }}" alt="{{ order.equipment.name }}">
+          <div class="order-info">
+            <h4>{{ order.equipment.name }}</h4>
+            <p>x {{ order.quantity }}</p>
+            <p class="order-status status-{{ order.status }}">สถานะ: {{ order.get_status_display }}</p>
+          </div>
+        </div>
+        <div>&rsaquo;</div>
+      </div>
+
+      <div id="modal-{{ order.id }}" class="modal">
+        <div class="modal-content">
+          <span class="close" onclick="closeModal('{{ order.id }}')">&times;</span>
+          <h3>📄 รายละเอียดคำสั่งซื้อ</h3>
+
+          <h4 style="margin-top: 1rem; color: #0D3F31;">🛒 สินค้า</h4>
+          <p><strong>{{ order.equipment.name }}</strong></p>
+          <p>จำนวน: {{ order.quantity }} ชิ้น</p>
+          <p>ราคาต่อชิ้น: {{ order.equipment.price|floatformat:2 }} บาท</p>
+          <p><strong>ยอดรวม:</strong> {{ order.total_price|floatformat:2 }} บาท</p>
+
+          <h4 style="margin-top: 1.2rem; color: #0D3F31;">📦 ข้อมูลผู้รับสินค้า</h4>
+          <p>{{ order.name }} | {{ order.tel }}</p>
+          <p>{{ order.address }}</p>
+
+          <h4 style="margin-top: 1.2rem; color: #0D3F31;">📅 วันที่สั่งซื้อ</h4>
+          <p>{{ order.created_at|date:'d/m/Y เวลา H:i' }}</p>
+
+          {% if order.tracking_number and order.status in 'shipping delivered' %}
+            <h4 style="margin-top: 1.2rem; color: #0D3F31;">🚚 หมายเลขพัสดุ</h4>
+            <p>{{ order.tracking_number }}</p>
+          {% endif %}
+
+          {% if order.payment_slip and order.status in 'preparing shipping delivered' %}
+            <h4 style="margin-top: 1.2rem; color: #0D3F31;">💳 สลิปชำระเงิน</h4>
+            <a href="{{ order.payment_slip.url }}" target="_blank" class="action-btn btn-slip">ดูสลิป</a>
+          {% endif %}
         </div>
       </div>
     {% empty %}
-      <p class="text-gray-500">No equipment purchases found.</p>
+      <p class="text-gray-500">ไม่มีคำสั่งซื้อในหมวดนี้</p>
     {% endfor %}
   </div>
 </div>
+
+<script>
+  function openModal(id) {
+    document.getElementById('modal-' + id).style.display = 'block';
+  }
+  function closeModal(id) {
+    document.getElementById('modal-' + id).style.display = 'none';
+  }
+</script>
 {% endblock %}

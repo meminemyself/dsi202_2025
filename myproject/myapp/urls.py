@@ -56,5 +56,8 @@ urlpatterns = [
     path('process-cart/', views.process_cart_items, name='process_cart_items'),
     path('confirm-cart/', views.split_cart_confirmation, name='split_cart_confirmation'),
     path('equipment/confirm-payment/<int:equipment_id>/', views.confirm_equipment_payment, name='confirm_equipment_payment'),
-    
+    path('orders/upload-slip/<int:purchase_id>/', views.upload_slip, name='upload_slip'),
+    path('cancel-order/<int:order_id>/', views.cancel_order, name='cancel_order'),
+    path('upload-slip/<int:order_id>/', views.upload_slip_form, name='upload_slip_form'),
+    path('equipment/create-order/<int:equipment_id>/', views.create_pending_order, name='create_pending_order'),         
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
