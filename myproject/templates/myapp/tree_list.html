@@ -3,7 +3,6 @@
 
 {% block content %}
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
-<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
 
 <style>
   body {
@@ -11,7 +10,11 @@
     background-color: #EFFAF3;
   }
 
-  a {
+  a,
+  a:hover,
+  .tree-card a,
+  .sidebar a,
+  .recommended-item a {
     text-decoration: none !important;
   }
 
@@ -25,7 +28,7 @@
     width: 280px;
     background: white;
     border-radius: 16px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.06);
     padding: 2rem 1.5rem;
     position: sticky;
     top: 6rem;
@@ -47,12 +50,12 @@
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid #FB7E2B;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     transition: box-shadow 0.3s ease;
   }
 
   .recommended-item:hover {
-    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
   }
 
   .recommended-item img {
@@ -80,12 +83,50 @@
     margin-bottom: 1.5rem;
   }
 
+  .filters form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border-left: 5px solid #FB7E2B;
+  }
+
+  .filters input[type="text"] {
+    flex: 2;
+    min-width: 200px;
+    padding: 0.6rem 1rem;
+    font-size: 1rem;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    background: #F9FCFB;
+  }
+
   .filters select {
-    padding: 0.5rem;
-    font-size: 0.95rem;
-    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    font-size: 1rem;
+    border-radius: 12px;
     border: 1px solid #ccc;
     background: white;
+    color: #0D3F31;
+  }
+
+  .filters button {
+    background-color: #FB7E2B;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.6rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .filters button:hover {
+    background-color: #0D3F31;
   }
 
   .tree-grid {
@@ -97,18 +138,17 @@
   .tree-card {
     background: #fff;
     border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
     overflow: hidden;
     color: inherit;
     display: flex;
     flex-direction: column;
-    transition: transform 0.2s ease;
+    transition: box-shadow 0.2s ease;
     border: 1px solid #ddd;
   }
 
   .tree-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
   }
 
   .tree-card img {
@@ -170,30 +210,21 @@
   }
 </style>
 
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script>
-  AOS.init();
-</script>
-
-<div class="filters" data-aos="fade-up" style="margin-top: 1rem;">
-  <form method="get" style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; background: white; padding: 1rem 1.5rem; border-radius: 16px; box-shadow: 0 6px 14px rgba(0,0,0,0.05); border-left: 5px solid #FB7E2B;">
-    <input type="text" name="q" placeholder="ค้นหาต้นไม้..." value="{{ request.GET.q }}" style="flex: 2; min-width: 200px; padding: 0.6rem 1rem; font-size: 1rem; border-radius: 12px; border: 1px solid #ccc; background: #F9FCFB;">
-
+<div class="filters" style="margin-top: 1rem;">
+  <form method="get">
+    <input type="text" name="q" placeholder="ค้นหาต้นไม้..." value="{{ request.GET.q }}">
     <label for="sort" style="font-weight: 600; color: #0D3F31;">เรียงตาม:</label>
-    <select name="sort" id="sort" onchange="this.form.submit()" style="padding: 0.6rem 1rem; font-size: 1rem; border-radius: 12px; border: 1px solid #ccc; background: white; color: #0D3F31;">
+    <select name="sort" id="sort" onchange="this.form.submit()">
       <option value="name" {% if selected_sort == 'name' %}selected{% endif %}>ชื่อ</option>
       <option value="price" {% if selected_sort == 'price' %}selected{% endif %}>ราคาต่ำไปสูง</option>
       <option value="-price" {% if selected_sort == '-price' %}selected{% endif %}>ราคาสูงไปต่ำ</option>
     </select>
-
-    <button type="submit" style="background-color: #FB7E2B; color: white; border: none; padding: 0.6rem 1.6rem; border-radius: 12px; font-size: 1rem; cursor: pointer; transition: background-color 0.3s ease;" onmouseover="this.style.backgroundColor='#0D3F31'" onmouseout="this.style.backgroundColor='#FB7E2B'">
-      <i class="fas fa-search"></i>
-    </button>
+    <button type="submit"><i class="fas fa-search"></i></button>
   </form>
 </div>
 
 <div class="page-layout">
-  <aside class="sidebar" data-aos="fade-right">
+  <aside class="sidebar">
     <h2>Recommended</h2>
     {% for tree in recommended_trees %}
       <div class="recommended-item">
@@ -206,7 +237,6 @@
   </aside>
 
   <section class="tree-section">
-    <div class="filters"></div>
     <div class="tree-grid">
       {% if trees %}
         {% for tree in trees %}

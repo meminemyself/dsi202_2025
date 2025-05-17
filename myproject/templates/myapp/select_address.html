@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Select Shipping Address | PLOOKJING{% endblock %}
+{% block title %}กรอกที่อยู่จัดส่ง | PLOOKJING{% endblock %}
 
 {% block content %}
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
@@ -9,71 +9,111 @@
     background-color: #F0F4F8;
   }
   .address-form {
-    max-width: 600px;
+    max-width: 720px;
     margin: 3rem auto;
-    padding: 2rem;
+    padding: 2rem 2.5rem;
     background: white;
     border-radius: 16px;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
   }
   .address-form h2 {
     font-size: 1.8rem;
     color: #0D3F31;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
     font-weight: bold;
+    text-align: center;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
   }
   .form-group {
-    margin-bottom: 1.2rem;
+    display: flex;
+    flex-direction: column;
   }
-  .form-group label {
-    display: block;
+  .form-group.full {
+    grid-column: span 2;
+  }
+  label {
     font-weight: 600;
-    margin-bottom: 0.4rem;
-    color: #333;
+    margin-bottom: 0.5rem;
+    color: #0D3F31;
   }
-  .form-group input, .form-group textarea {
-    width: 100%;
-    padding: 0.7rem;
+  input, textarea {
+    padding: 0.75rem;
     border: 1px solid #ccc;
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 1rem;
+    background-color: #F9FCFB;
+  }
+  textarea {
+    resize: vertical;
   }
   .submit-btn {
-    background-color: #0D6E3E;
+    margin-top: 2rem;
+    width: 100%;
+    background-color: #FB7E2B;
     color: white;
     border: none;
-    padding: 0.9rem 2rem;
-    border-radius: 10px;
-    font-size: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
     font-weight: bold;
     cursor: pointer;
-    width: 100%;
-    transition: background 0.3s;
+    transition: background-color 0.3s ease;
   }
   .submit-btn:hover {
-    background-color: #095C34;
+    background-color: #E76C1C;
+  }
+  @media (max-width: 768px) {
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
 
 <div class="address-form">
-  <h2>Shipping Information</h2>
+  <h2>กรอกข้อมูลที่อยู่จัดส่ง</h2>
   <form method="GET" action="{% url 'equipment_payment' equipment.id %}">
-    <div class="form-group">
-      <label for="name">Full Name</label>
-      <input type="text" id="name" name="name" required placeholder="Enter your full name">
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="name">ชื่อ-นามสกุล</label>
+        <input type="text" id="name" name="name" required placeholder="กรอกชื่อ-นามสกุล">
+      </div>
+
+      <div class="form-group">
+        <label for="tel">เบอร์โทรศัพท์</label>
+        <input type="text" id="tel" name="tel" required placeholder="กรอกเบอร์โทร">
+      </div>
+
+      <div class="form-group">
+        <label for="province">จังหวัด</label>
+        <input type="text" id="province" name="province" required placeholder="กรอกจังหวัด">
+      </div>
+
+      <div class="form-group">
+        <label for="district">อำเภอ/เขต</label>
+        <input type="text" id="district" name="district" required placeholder="กรอกอำเภอ/เขต">
+      </div>
+
+      <div class="form-group">
+        <label for="subdistrict">ตำบล/แขวง</label>
+        <input type="text" id="subdistrict" name="subdistrict" required placeholder="กรอกตำบล/แขวง">
+      </div>
+
+      <div class="form-group">
+        <label for="zipcode">รหัสไปรษณีย์</label>
+        <input type="text" id="zipcode" name="zipcode" required placeholder="กรอกรหัสไปรษณีย์">
+      </div>
+
+      <div class="form-group full">
+        <label for="address">ที่อยู่โดยละเอียด</label>
+        <textarea id="address" name="address" rows="3" required placeholder="บ้านเลขที่ / หมู่บ้าน / อาคาร / ซอย / ถนน ฯลฯ"></textarea>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label for="tel">Phone Number</label>
-      <input type="text" id="tel" name="tel" required placeholder="Enter your phone number">
-    </div>
-
-    <div class="form-group">
-      <label for="address">Shipping Address</label>
-      <textarea id="address" name="address" rows="4" required placeholder="Enter your shipping address"></textarea>
-    </div>
-
-    <button type="submit" class="submit-btn">Continue to Payment</button>
+    <button type="submit" class="submit-btn">ดำเนินการชำระเงิน</button>
   </form>
 </div>
 {% endblock %}

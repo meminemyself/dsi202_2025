@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
+from django.views.generic import TemplateView
 urlpatterns = [
     path('', views.home, name='home'),
     path('trees/', views.tree_list, name='tree_list'),
@@ -10,7 +11,6 @@ urlpatterns = [
     path('purchase/<int:equipment_id>/', views.purchase_equipment, name='purchase_equipment'),
     path('plant/<int:tree_id>/', views.plant_tree, name='plant_tree'),
     path('select-location/<int:tree_id>/', views.select_location_for_tree, name='select_location_for_tree'),
-    path('payment/', views.payment, name='payment'),
     path('notifications/', views.notification_list, name='notification_list'),
     path('my-trees/', views.my_trees, name='my_trees'),
     path('plant-at-location/<int:tree_id>/<int:location_id>/', views.plant_tree_at_location, name='plant_tree_at_location'),
@@ -26,11 +26,9 @@ urlpatterns = [
     path('news/', views.news_list, name='news_list'),
     path('search/', views.search_results, name='search_results'),
     path('about/', views.about, name='about'),
-    path('payment/<int:tree_id>/', views.payment, name='payment'),
     path('contact/', views.contact, name='contact'),
     path('confirm-location/<int:tree_id>/<int:location_id>/', views.confirm_location, name='confirm_location'),
     path('plant/<int:tree_id>/<int:location_id>/', views.plant_tree, name='plant_tree'),
-    path('payment/<int:tree_id>/', views.payment, name='payment'),
     path('payment/success/<int:tree_id>/', views.payment_success, name='payment_success'),
     path('equipment/select-address/<int:equipment_id>/', views.select_address, name='select_address'),
     path('equipment/payment/<int:equipment_id>/', views.equipment_payment, name='equipment_payment'),
@@ -45,10 +43,15 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(next_page='home'), name='logout'),
     path('signup/', views.signup, name='signup'),
     path('planting-plan/', views.planting_plan, name='planting_plan'),
-    path('add-to-cart/<int:tree_id>/', views.add_to_cart, name='add_to_cart'),
+    path('add-to-cart/<str:item_type>/<int:item_id>/', views.add_to_cart, name='add_to_cart'),
+    path('remove-from-cart/<str:item_type>/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
+    path('update-cart/<str:item_type>/<int:item_id>/', views.update_cart, name='update_cart'),
     path('cart/', views.cart_view, name='cart'),
-    path('remove-from-cart/<int:tree_id>/', views.remove_from_cart, name='remove_from_cart'),
-    path('update-cart/<int:tree_id>/', views.update_cart, name='update_cart'),
     path('start-planting/', views.start_planting_redirect, name='start_planting_redirect'),
+    path('', views.home, name='home'),
     path('signup/', views.signup, name='signup'),
+    path('lockout/', TemplateView.as_view(template_name='lockout.html'), name='account_lockout'),
+    path('process-cart/', views.process_cart_items, name='process_cart_items'),
+    path('confirm-cart/', views.split_cart_confirmation, name='split_cart_confirmation')
+    
 ]

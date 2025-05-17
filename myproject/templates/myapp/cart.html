@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
-{% block title %}ตะกร้าของคุณ | PLOOKJING{% endblock %}
+{% block title %}Your Cart | PLOOKJING{% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
 <style>
   .cart-container {
     max-width: 1000px;
@@ -9,15 +11,16 @@
     padding: 2rem;
     background: white;
     border-radius: 20px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    font-family: 'Prompt', sans-serif;
   }
 
   .cart-header {
     font-size: 2rem;
     font-weight: bold;
     color: var(--green-dark);
-    margin-bottom: 1.5rem;
     text-align: center;
+    margin-bottom: 2rem;
   }
 
   .cart-table {
@@ -27,23 +30,32 @@
   }
 
   .cart-table th {
-    text-align: left;
-    padding: 1rem;
-    background: var(--green-light);
+    background-color: var(--green-light);
     color: var(--green-dark);
-    font-size: 0.9rem;
-    border-radius: 10px 10px 0 0;
+    text-align: center;
+    padding: 1rem;
+    font-weight: 600;
+    border-radius: 12px 12px 0 0;
+    font-size: 0.95rem;
   }
 
   .cart-table td {
     background: #f9f9f9;
     padding: 1rem;
     border-radius: 12px;
+    text-align: center;
+    font-size: 0.95rem;
     vertical-align: middle;
+  }
+
+  .cart-table td:first-child {
+    text-align: left;
+    font-weight: 600;
   }
 
   .qty-form {
     display: flex;
+    justify-content: center;
     align-items: center;
     gap: 0.5rem;
   }
@@ -53,9 +65,9 @@
     border: none;
     color: white;
     font-weight: bold;
-    font-size: 1rem;
-    width: 28px;
-    height: 28px;
+    font-size: 1.1rem;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     cursor: pointer;
     transition: background-color 0.2s ease;
@@ -66,18 +78,19 @@
   }
 
   .qty-box {
-    min-width: 40px;
+    width: 40px;
+    height: 34px;
     text-align: center;
     font-weight: bold;
     border: 1px solid #ddd;
-    padding: 0.2rem 0.5rem;
     border-radius: 8px;
-    background-color: #fff;
+    line-height: 34px;
+    background: white;
   }
 
   .cart-total {
-    text-align: right;
     margin-top: 2rem;
+    text-align: right;
     font-size: 1.2rem;
     font-weight: bold;
     color: var(--green-dark);
@@ -88,17 +101,19 @@
     text-align: right;
   }
 
-  .cart-actions a {
+  .cart-actions button {
     background-color: var(--green-dark);
     color: white;
-    padding: 0.7rem 1.6rem;
-    border-radius: 30px;
-    text-decoration: none;
+    padding: 0.8rem 2rem;
+    border-radius: 999px;
+    border: none;
     font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
     transition: background-color 0.3s ease;
   }
 
-  .cart-actions a:hover {
+  .cart-actions button:hover {
     background-color: #0b352b;
   }
 
@@ -106,8 +121,8 @@
     background: none;
     border: none;
     color: #cc0000;
+    font-size: 1.1rem;
     cursor: pointer;
-    font-size: 1rem;
   }
 
   .remove-btn:hover {
@@ -116,61 +131,73 @@
 
   .empty-cart {
     text-align: center;
+    padding: 3rem;
     color: #666;
-    padding: 3rem 1rem;
   }
 
   .empty-cart a {
-    display: inline-block;
     margin-top: 1rem;
-    background-color: var(--orange);
+    display: inline-block;
+    background: var(--orange);
     color: white;
     padding: 0.6rem 1.4rem;
-    border-radius: 30px;
+    border-radius: 999px;
     font-weight: bold;
     text-decoration: none;
+    transition: background-color 0.3s ease;
+  }
+
+  .empty-cart a:hover {
+    background-color: #e76c1c;
   }
 </style>
 
 <div class="cart-container">
-  <div class="cart-header">🛒 ตะกร้าของคุณ</div>
+  <div class="cart-header">🛒 Your Cart</div>
 
   {% if cart_items %}
   <table class="cart-table">
     <thead>
       <tr>
-        <th>ต้นไม้</th>
-        <th>จำนวน</th>
-        <th>ราคาต่อหน่วย</th>
-        <th>รวม</th>
-        <th>ลบ</th>
+        <th>Item</th>
+        <th>Qty</th>
+        <th>Unit Price</th>
+        <th>Total</th>
+        <th>Remove</th>
       </tr>
     </thead>
     <tbody>
       {% for item in cart_items %}
       <tr>
-        <td>{{ item.tree.name }}</td>
+        <td>
+          {{ item.item.name }}
+          {% if item.type == 'equipment' %}
+            <span style="color:#888;">(Equipment)</span>
+          {% else %}
+            <span style="color:#888;">(Tree)</span>
+          {% endif %}
+        </td>
         <td>
           <div class="qty-form">
-            <form method="post" action="{% url 'update_cart' item.tree.id %}">
+            <form method="post" action="{% url 'update_cart' item.type item.item.id %}">
               {% csrf_token %}
               <input type="hidden" name="action" value="decrease">
-              <button type="submit">-</button>
+              <button type="submit">−</button>
             </form>
             <div class="qty-box">{{ item.quantity }}</div>
-            <form method="post" action="{% url 'update_cart' item.tree.id %}">
+            <form method="post" action="{% url 'update_cart' item.type item.item.id %}">
               {% csrf_token %}
               <input type="hidden" name="action" value="increase">
               <button type="submit">+</button>
             </form>
           </div>
         </td>
-        <td>{{ item.tree.price|floatformat:2 }} บาท</td>
-        <td class="text-orange-600 font-semibold">{{ item.total_price|floatformat:2 }} บาท</td>
+        <td style="text-align: right;">{{ item.item.price|floatformat:2 }} บาท</td>
+        <td style="text-align: right; color: #FB7E2B; font-weight: bold;">{{ item.total_price|floatformat:2 }} บาท</td>
         <td>
-          <form action="{% url 'remove_from_cart' item.tree.id %}" method="post">
+          <form method="post" action="{% url 'remove_from_cart' item.type item.item.id %}">
             {% csrf_token %}
-            <button type="submit" class="remove-btn" title="ลบ">
+            <button type="submit" class="remove-btn" title="ลบรายการนี้">
               <i class="fas fa-trash-alt"></i>
             </button>
           </form>
@@ -181,23 +208,22 @@
   </table>
 
   <div class="cart-total">
-    ยอดรวม: <span class="text-orange-600">{{ cart_total|floatformat:2 }} บาท</span>
+    Total: <span class="text-orange-600">{{ cart_total|floatformat:2 }} บาท</span>
   </div>
 
   <div class="cart-actions">
-    <form method="post" action="{% url 'start_planting_redirect' %}">
+    <form method="post" action="{% url 'process_cart_items' %}">
       {% csrf_token %}
-      <input type="hidden" name="tree_id" value="{{ cart_items.0.tree.id }}">
-      <button class="w-full bg-orange-500 hover:bg-orange-600 text-white text-xl font-bold py-4 rounded-full shadow-md transition-all duration-300">
-        <i class="fas fa-seedling mr-2"></i> ยืนยันตำแหน่งปลูก
+      <button type="submit" class="btn-full-green">
+        🌱 ยืนยันคำสั่งซื้อ
       </button>
     </form>
   </div>
 
   {% else %}
   <div class="empty-cart">
-    <p>ยังไม่มีต้นไม้ในตะกร้าของคุณ 😢</p>
-    <a href="{% url 'tree_list' %}">🌱 ไปเลือกต้นไม้</a>
+    <p>Your cart is currently empty 😢</p>
+    <a href="{% url 'tree_list' %}">🌱 Explore Trees</a>
   </div>
   {% endif %}
 </div>

@@ -125,6 +125,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/login/'         # URL ที่ใช้ redirect ไปยังหน้า login
 LOGIN_REDIRECT_URL = '/'      # URL หลังจาก login สำเร็จ
 LOGOUT_REDIRECT_URL = '/login/'  # URL หลังจาก logout
-
+AXES_LOCKOUT_URL = '/lockout/'
+AXES_LOCKOUT_URL = '/login/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+

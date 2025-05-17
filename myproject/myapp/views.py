@@ -99,26 +99,6 @@ def plant_tree_at_location(request, tree_id, location_id):
     return redirect('payment', tree_id=tree.id)
 
 @login_required
-def payment(request, tree_id):
-    tree = get_object_or_404(Tree, pk=tree_id)
-
-    # สร้าง location ปลอมสำหรับกรณีไม่เลือกเอง
-    default_location, created = PlantingLocation.objects.get_or_create(
-        name="Unknown Location",  # หรือ “ไม่ระบุพื้นที่”
-        defaults={
-            "description": "Auto-assigned due to direct payment.",
-            "location_type": "unspecified"
-        }
-    )
-
-    # เช็คว่าปลูกไปแล้วหรือยัง
-    existing = UserPlanting.objects.filter(user=request.user, tree=tree)
-    if not existing.exists():
-        UserPlanting.objects.create(user=request.user, tree=tree, location=default_location)
-
-    return render(request, 'myapp/payment.html', {'tree': tree})
-
-@login_required
 def my_trees(request):
     trees = UserPlanting.objects.filter(user=request.user).select_related('tree', 'location')
     return render(request, 'myapp/my_trees.html', {'trees': trees})
@@ -279,57 +259,89 @@ def signup(request):
 def planting_plan(request):
     return render(request, 'myapp/planting_plan.html')
 
-
-def add_to_cart(request, tree_id):
+    
+def add_to_cart(request, item_type, item_id):
     if request.method == 'POST':
         quantity = int(request.POST.get('quantity', 1))
-        tree = get_object_or_404(Tree, id=tree_id)
+
+        # ตรวจสอบประเภท
+        if item_type == 'tree':
+            item = get_object_or_404(Tree, id=item_id)
+        elif item_type == 'equipment':
+            item = get_object_or_404(Equipment, id=item_id)
+        else:
+            return redirect('home')
 
         cart = request.session.get('cart', [])
-        cart.append({'id': tree.id, 'qty': quantity})
+        item_found = False
+
+        # ตรวจสอบว่า item นั้นมีอยู่ใน cart แล้วหรือไม่
+        for cart_item in cart:
+            if cart_item['id'] == item.id and cart_item['type'] == item_type:
+                cart_item['qty'] += quantity
+                item_found = True
+                break
+
+        # ถ้ายังไม่เจอ item นี้เลยในตะกร้า
+        if not item_found:
+            cart.append({'id': item.id, 'qty': quantity, 'type': item_type})
+
+        # บันทึกกลับเข้า session
         request.session['cart'] = cart
 
         return redirect('cart')
-    else:
-        return redirect('tree_detail', tree_id=tree_id)
-
+    
 def cart_view(request):
     cart = request.session.get('cart', [])
     cart_items = []
     cart_total = 0
 
     for item in cart:
-        tree = Tree.objects.get(id=item['id'])
+        item_type = item.get('type')
+        item_id = item.get('id')
         quantity = item.get('qty', 1)
-        total_price = tree.price * quantity
-        cart_items.append({
-            'tree': tree,
-            'quantity': quantity,
-            'total_price': total_price,
-        })
-        cart_total += total_price
 
-    context = {
+        try:
+            if item_type == 'tree':
+                product = Tree.objects.get(id=item_id)
+            elif item_type == 'equipment':
+                product = Equipment.objects.get(id=item_id)
+            else:
+                continue  # skip unknown type
+
+            total_price = product.price * quantity
+            cart_items.append({
+                'item': product,
+                'type': item_type,
+                'quantity': quantity,
+                'total_price': total_price,
+            })
+            cart_total += total_price
+
+        except Exception as e:
+            print(f"Error loading item {item_id} of type {item_type}: {e}")
+            continue  # ข้ามถ้ามีปัญหา
+
+    return render(request, 'myapp/cart.html', {
         'cart_items': cart_items,
         'cart_total': cart_total
-    }
-    return render(request, 'myapp/cart.html', context)
+    })
 
-def remove_from_cart(request, tree_id):
+def remove_from_cart(request, item_type, item_id):
     cart = request.session.get('cart', [])
-    cart = [item for item in cart if item['id'] != tree_id]
+    cart = [item for item in cart if not (item['id'] == item_id and item['type'] == item_type)]
     request.session['cart'] = cart
     return redirect('cart')
 
 from django.views.decorators.http import require_POST
 
 @require_POST
-def update_cart(request, tree_id):
+def update_cart(request, item_type, item_id):
     action = request.POST.get('action')
     cart = request.session.get('cart', [])
 
     for item in cart:
-        if item['id'] == tree_id:
+        if item['id'] == item_id and item['type'] == item_type:
             if action == 'increase':
                 item['qty'] += 1
             elif action == 'decrease':
@@ -357,3 +369,55 @@ def signup(request):
     else:
         form = UserCreationForm()
     return render(request, 'myapp/signup.html', {'form': form})
+
+from django.shortcuts import redirect
+from django.contrib import messages
+
+def process_cart_items(request):
+    cart = request.session.get('cart', [])
+
+    has_tree = any(item['type'] == 'tree' for item in cart)
+    has_equipment = any(item['type'] == 'equipment' for item in cart)
+
+    if has_tree:
+        # 👉 เริ่มจากเลือกพื้นที่ปลูกต้นไม้
+        tree_id = next((item['id'] for item in cart if item['type'] == 'tree'), None)
+        return redirect('select_location_for_tree', tree_id=tree_id)
+
+    elif has_equipment:
+        # 👉 ถ้าไม่มีต้นไม้ ก็ข้ามไปกรอกที่อยู่
+        equipment_id = next((item['id'] for item in cart if item['type'] == 'equipment'), None)
+        return redirect('select_address', equipment_id=equipment_id)
+
+    else:
+        messages.error(request, "ยังไม่มีรายการสินค้าในตะกร้า")
+        return redirect('cart')
+    
+def split_cart_confirmation(request):
+    return render(request, 'split_cart_confirmation.html')  # สร้างหน้าเปล่าๆ ก่อนก็ได้
+
+@login_required
+def equipment_payment(request, equipment_id):
+    equipment = get_object_or_404(Equipment, pk=equipment_id)
+    qty = int(request.GET.get("qty", 1))
+
+    # รับค่าที่อยู่และผู้รับจากแบบฟอร์ม
+    name = request.GET.get("name", "")
+    tel = request.GET.get("tel", "")
+    address = request.GET.get("address", "")
+    province = request.GET.get("province", "")
+    district = request.GET.get("district", "")
+    subdistrict = request.GET.get("subdistrict", "")
+    zipcode = request.GET.get("zipcode", "")
+
+    # รวมที่อยู่เต็ม
+    full_address = f"{address}, ต.{subdistrict}, อ.{district}, จ.{province} {zipcode}"
+
+    return render(request, 'myapp/equipment_payment.html', {
+        'equipment': equipment,
+        'qty': qty,
+        'total': equipment.price * qty,
+        'name': name,
+        'tel': tel,
+        'full_address': full_address,
+    })

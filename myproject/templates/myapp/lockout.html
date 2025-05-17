@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Access Denied | PLOOKJING{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 3rem auto; text-align: center; font-family: 'Prompt', sans-serif;">
+  <h1 style="color: #cc0000;">🚫 Access Locked</h1>
+  <p style="font-size: 1.2rem; color: #444;">
+    You have been locked out due to too many failed login attempts.<br>
+    Please try again later or contact support.
+  </p>
+
+  <a href="{% url 'login' %}" class="mt-6 inline-block bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-full font-bold transition-all duration-200">
+    🔐 Go Back to Login
+  </a>
+</div>
+{% endblock %}
