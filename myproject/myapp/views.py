@@ -396,28 +396,38 @@ def process_cart_items(request):
 def split_cart_confirmation(request):
     return render(request, 'split_cart_confirmation.html')  # สร้างหน้าเปล่าๆ ก่อนก็ได้
 
+from myapp.utils.promptpay import get_payload
+import qrcode
+import io
+import base64
+
+def generate_qr_base64(mobile, amount):
+    payload = get_payload(mobile=mobile, amount=amount)
+    qr_img = qrcode.make(payload)
+    buffer = io.BytesIO()
+    qr_img.save(buffer, format='PNG')
+    return base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+from myapp.utils.promptpay import get_payload, generate_qr_base64
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404
+from .models import Equipment
+
+from myapp.utils.promptpay import get_payload, generate_qr_base64
+
 @login_required
 def equipment_payment(request, equipment_id):
     equipment = get_object_or_404(Equipment, pk=equipment_id)
     qty = int(request.GET.get("qty", 1))
+    total = equipment.price * qty
 
-    # รับค่าที่อยู่และผู้รับจากแบบฟอร์ม
-    name = request.GET.get("name", "")
-    tel = request.GET.get("tel", "")
-    address = request.GET.get("address", "")
-    province = request.GET.get("province", "")
-    district = request.GET.get("district", "")
-    subdistrict = request.GET.get("subdistrict", "")
-    zipcode = request.GET.get("zipcode", "")
-
-    # รวมที่อยู่เต็ม
-    full_address = f"{address}, ต.{subdistrict}, อ.{district}, จ.{province} {zipcode}"
+    phone_number = "0612438750"  # ใส่ PromptPay ของคุณ
+    payload = get_payload(phone_number, total)
+    qr_base64 = generate_qr_base64(payload)
 
     return render(request, 'myapp/equipment_payment.html', {
         'equipment': equipment,
         'qty': qty,
-        'total': equipment.price * qty,
-        'name': name,
-        'tel': tel,
-        'full_address': full_address,
+        'total': total,
+        'qr_base64': qr_base64,
     })

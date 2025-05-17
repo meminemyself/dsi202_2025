@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
-{% block title %}ชำระเงินอุปกรณ์ | PLOOKJING{% endblock %}
+{% block title %}ชำระเงินค่าสินค้า | PLOOKJING{% endblock %}
 
 {% block content %}
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
@@ -15,7 +14,7 @@
     max-width: 720px;
     margin: 3rem auto;
     background: white;
-    padding: 2.5rem 2rem;
+    padding: 2.5rem;
     border-radius: 20px;
     box-shadow: 0 10px 24px rgba(0,0,0,0.08);
   }
@@ -28,78 +27,83 @@
   .payment-header h2 {
     font-size: 2rem;
     color: #0D3F31;
-    margin-bottom: 0.5rem;
     font-weight: bold;
+    margin-bottom: 0.5rem;
   }
 
   .payment-header p {
     font-size: 1.1rem;
-    color: #444;
-  }
-
-  .equipment-details {
-    margin-bottom: 2rem;
-  }
-
-  .equipment-details h3 {
-    font-size: 1.5rem;
-    color: #0D3F31;
-    margin-bottom: 0.5rem;
-  }
-
-  .equipment-details p {
-    font-size: 1rem;
     color: #555;
-    margin: 0.2rem 0;
   }
 
-  .address-section {
-    margin-bottom: 2rem;
+  .item-summary {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    align-items: center;
   }
 
-  .address-section h4 {
-    font-size: 1.2rem;
-    color: #0D3F31;
-    margin-bottom: 0.5rem;
-  }
-
-  .address-section p {
-    font-size: 1rem;
-    color: #555;
-    margin: 0.2rem 0;
-  }
-
-  .qr-section {
-    text-align: center;
-    margin-bottom: 2rem;
-  }
-
-  .qr-section img {
-    width: 260px;
-    height: 260px;
-    object-fit: contain;
-    border-radius: 16px;
+  .item-summary img {
+    width: 160px;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 12px;
     border: 1px solid #ddd;
-    background-color: #f8f8f8;
   }
 
-  .qr-note {
-    font-size: 0.95rem;
-    color: #555;
+  .item-info {
+    flex: 1;
+  }
+
+  .item-info h3 {
+    font-size: 1.4rem;
+    color: #0D3F31;
+    margin: 0 0 0.5rem;
+  }
+
+  .item-info p {
+    font-size: 1rem;
+    color: #666;
+  }
+
+  .amount-section {
+    margin-top: 2rem;
+    text-align: right;
+  }
+
+  .amount-label {
+    font-size: 1rem;
+    color: #777;
+  }
+
+  .amount-value {
+    font-size: 1.6rem;
+    color: #FB7E2B;
+    font-weight: bold;
+  }
+
+  .address-note {
     margin-top: 1rem;
+    font-size: 0.95rem;
+    color: #0D3F31;
+    background: #F2FFF2;
+    padding: 1rem;
+    border-left: 4px solid #0D6E3E;
+    border-radius: 10px;
   }
 
   .confirm-btn {
+    margin-top: 2rem;
     display: block;
     width: 100%;
-    text-align: center;
     background-color: #0D6E3E;
     color: white;
     padding: 1rem;
     font-size: 1.1rem;
     font-weight: bold;
-    border-radius: 12px;
     border: none;
+    border-radius: 12px;
+    text-align: center;
     text-decoration: none;
     transition: background-color 0.3s ease;
   }
@@ -109,45 +113,58 @@
   }
 
   @media (max-width: 768px) {
-    .payment-container {
-      padding: 2rem 1.5rem;
+    .item-summary {
+      flex-direction: column;
+      text-align: center;
     }
 
-    .equipment-details h3 {
-      font-size: 1.3rem;
+    .item-info {
+      text-align: center;
     }
 
-    .qr-section img {
-      width: 220px;
-      height: 220px;
+    .amount-section {
+      text-align: center;
     }
   }
 </style>
 
 <div class="payment-container">
   <div class="payment-header">
-    <h2>ชำระเงินสำหรับอุปกรณ์ "{{ equipment.name }}"</h2>
-    <p>โปรดชำระเงินตามจำนวนที่กำหนดผ่าน Mobile Banking</p>
+    <h2>ยืนยันการชำระเงิน</h2>
+    <p>รายการของคุณพร้อมแล้วสำหรับการชำระเงิน</p>
   </div>
 
-  <div class="equipment-details">
-    <h3>รายละเอียดอุปกรณ์</h3>
-    <p><strong>ชื่อ:</strong> {{ equipment.name }}</p>
-    <p><strong>จำนวน:</strong> {{ qty }} ชิ้น</p>
-    <p><strong>ราคาต่อชิ้น:</strong> {{ equipment.price|floatformat:2 }} บาท</p>
-    <p><strong>ราคารวม:</strong> {{ total|floatformat:2 }} บาท</p>
+  <div class="item-summary">
+    <img src="{{ equipment.image_url }}" alt="{{ equipment.name }}">
+    <div class="item-info">
+      <h3>{{ equipment.name }}</h3>
+      <p>จำนวน: {{ qty }} ชิ้น</p>
+      <p>ราคาต่อชิ้น: {{ equipment.price|floatformat:2 }} บาท</p>
+    </div>
   </div>
 
-  <div class="address-section">
-    <h4>ที่อยู่จัดส่ง</h4>
-    <p>{{ address }}</p>
+  <div class="amount-section">
+    <div class="amount-label">ยอดรวมที่ต้องชำระ</div>
+    <div class="amount-value">{{ total|floatformat:2 }} บาท</div>
   </div>
 
-  <div class="qr-section">
-    <img src="{% static 'images/sample_qr.png' %}" alt="QR Code สำหรับชำระเงิน">
-    <div class="qr-note">สแกน QR Code เพื่อชำระผ่านแอปธนาคารของคุณ</div>
+  <div class="shipping-info" style="background:#F8F9FA; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+    <h3 style="color: #0D3F31; margin-bottom: 1rem;">ข้อมูลผู้รับและที่อยู่จัดส่ง</h3>
+    <p><strong>ชื่อผู้รับ:</strong> {{ name }}</p>
+    <p><strong>เบอร์โทร:</strong> {{ tel }}</p>
+    <p><strong>ที่อยู่:</strong> {{ full_address }}</p>
   </div>
 
-  <a href="{% url 'payment_success' equipment.id %}" class="confirm-btn">ยืนยันการชำระเงิน</a>
+  <div class="qr-box" style="text-align:center; margin-top:2rem;">
+    <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR Code">
+    <p style="margin-top: 1rem;">สแกนเพื่อชำระเงินผ่าน Mobile Banking</p>
+  </div>
+{% if qr_path %}
+  <div class="qr-box" style="text-align:center; margin-top:2rem;">
+    <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR Code สำหรับชำระเงิน">
+    <p>สแกน QR ด้วยแอปธนาคารของคุณ</p>
+  </div>
+{% endif %}
+  <a href="{% url 'my_orders' %}" class="confirm-btn">ชำระเงินสำเร็จ</a>
 </div>
 {% endblock %}
