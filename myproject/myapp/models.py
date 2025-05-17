@@ -68,3 +68,20 @@ class NewsArticle(models.Model):
 
     def __str__(self):
         return self.title
+    
+    class Purchase(models.Model):
+        user = models.ForeignKey(User, on_delete=models.CASCADE)
+        equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE)
+        quantity = models.PositiveIntegerField(default=1)
+        purchase_date = models.DateTimeField(auto_now_add=True)
+        is_paid = models.BooleanField(default=False)  # ✅ เพิ่ม field นี้ 
+
+    class PaymentProof(models.Model):
+        user = models.ForeignKey(User, on_delete=models.CASCADE)
+        equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE)
+        slip = models.ImageField(upload_to='slips/')
+        name = models.CharField(max_length=255)
+        tel = models.CharField(max_length=20)
+        address = models.TextField()
+        submitted_at = models.DateTimeField(auto_now_add=True)
+        is_verified = models.BooleanField(default=False)

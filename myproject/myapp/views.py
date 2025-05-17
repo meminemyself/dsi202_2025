@@ -396,38 +396,66 @@ def process_cart_items(request):
 def split_cart_confirmation(request):
     return render(request, 'split_cart_confirmation.html')  # สร้างหน้าเปล่าๆ ก่อนก็ได้
 
-from myapp.utils.promptpay import get_payload
-import qrcode
-import io
-import base64
-
-def generate_qr_base64(mobile, amount):
-    payload = get_payload(mobile=mobile, amount=amount)
-    qr_img = qrcode.make(payload)
-    buffer = io.BytesIO()
-    qr_img.save(buffer, format='PNG')
-    return base64.b64encode(buffer.getvalue()).decode('utf-8')
-
-from myapp.utils.promptpay import get_payload, generate_qr_base64
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404
-from .models import Equipment
-
-from myapp.utils.promptpay import get_payload, generate_qr_base64
+from myapp.utils.promptpay import generate_qr_base64
 
 @login_required
 def equipment_payment(request, equipment_id):
     equipment = get_object_or_404(Equipment, pk=equipment_id)
     qty = int(request.GET.get("qty", 1))
-    total = equipment.price * qty
+    total = float(equipment.price * qty)
 
-    phone_number = "0612438750"  # ใส่ PromptPay ของคุณ
-    payload = get_payload(phone_number, total)
-    qr_base64 = generate_qr_base64(payload)
+    phone_number = "0612345678"  # เปลี่ยนได้
+    qr_base64 = generate_qr_base64(phone_number, total)
 
     return render(request, 'myapp/equipment_payment.html', {
-        'equipment': equipment,
-        'qty': qty,
-        'total': total,
-        'qr_base64': qr_base64,
-    })
+    'equipment': equipment,
+    'qty': qty,
+    'total': total,
+    'qr_base64': qr_base64,
+    'name': request.GET.get("name", ""),
+    'tel': request.GET.get("tel", ""),
+    'full_address': f"{request.GET.get('address', '')}, ต.{request.GET.get('subdistrict', '')}, อ.{request.GET.get('district', '')}, จ.{request.GET.get('province', '')} {request.GET.get('zipcode', '')}",
+})
+
+@login_required
+def confirm_equipment_payment(request, equipment_id):
+    if request.method == 'POST':
+        equipment = get_object_or_404(Equipment, id=equipment_id)
+        qty = int(request.GET.get("qty", 1))
+        address = request.POST.get("address", "")
+        name = request.POST.get("name", "")
+        tel = request.POST.get("tel", "")
+
+        # สร้างออเดอร์ พร้อมตั้งสถานะยังไม่จ่ายเงิน
+        Purchase.objects.create(
+            user=request.user,
+            equipment=equipment,
+            quantity=qty,
+            is_paid=False  # ✅ ยังไม่ยืนยันการชำระ
+        )
+
+        messages.success(request, "ระบบได้รับการแจ้งโอนแล้ว กรุณารอเจ้าหน้าที่ตรวจสอบ")
+        return redirect('my_orders')  # หรือหน้าแสดงสถานะ
+
+    return redirect('equipment_list')
+
+@login_required
+def confirm_equipment_payment(request, equipment_id):
+    if request.method == 'POST':
+        equipment = get_object_or_404(Equipment, id=equipment_id)
+        slip_file = request.FILES.get('slip')  # 👉 รับไฟล์
+
+        if slip_file:
+            # 🔧 สมมุติว่าคุณมี model PaymentProof
+            PaymentProof.objects.create(
+                user=request.user,
+                equipment=equipment,
+                slip=slip_file,
+                name=request.POST.get('name'),
+                tel=request.POST.get('tel'),
+                address=request.POST.get('address'),
+            )
+            messages.success(request, "ส่งข้อมูลสำเร็จ กรุณารอการตรวจสอบจากแอดมิน")
+            return redirect('my_orders')
+
+    return redirect('equipment_payment', equipment_id=equipment_id)

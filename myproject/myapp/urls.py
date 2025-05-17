@@ -2,6 +2,8 @@ from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
 from django.views.generic import TemplateView
+from django.conf import settings
+from django.conf.urls.static import static
 urlpatterns = [
     path('', views.home, name='home'),
     path('trees/', views.tree_list, name='tree_list'),
@@ -52,6 +54,7 @@ urlpatterns = [
     path('signup/', views.signup, name='signup'),
     path('lockout/', TemplateView.as_view(template_name='lockout.html'), name='account_lockout'),
     path('process-cart/', views.process_cart_items, name='process_cart_items'),
-    path('confirm-cart/', views.split_cart_confirmation, name='split_cart_confirmation')
+    path('confirm-cart/', views.split_cart_confirmation, name='split_cart_confirmation'),
+    path('equipment/confirm-payment/<int:equipment_id>/', views.confirm_equipment_payment, name='confirm_equipment_payment'),
     
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

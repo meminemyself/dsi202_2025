@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path, include   # 👉 ต้อง import include ด้วย
 from django.conf import settings
 from django.conf.urls.static import static
+
 urlpatterns = [
     path('admin/', admin.site.urls),          # เส้นทาง admin
     path('', include('myapp.urls')),           # เส้นทางไปยัง myapp.urls

@@ -1,34 +1,37 @@
 import qrcode
 import base64
 from io import BytesIO
-from typing import Optional
-import re
-import binascii
+from crcmod.predefined import mkCrcFun
 
-def format_phone(phone: str) -> str:
-    phone = re.sub(r'\D', '', phone)  # remove non-digit
-    if phone.startswith('0'):
-        phone = '66' + phone[1:]
-    return phone
+def format_mobile(number: str) -> str:
+    number = number.strip().replace("-", "").replace(" ", "")
+    if number.startswith("0"):
+        number = "66" + number[1:]
+    return number
 
-def get_payload(phone: str, amount: Optional[float] = None) -> str:
-    phone = format_phone(phone)
-    payload = f"00020101021129370016A0000006770101110113{len(phone):02d}{phone}"
-    if amount is not None:
-        payload += f"540{len(f'{amount:.2f}'):02d}{amount:.2f}"
-    payload += "5802TH53037646304"  # country code + currency + checksum placeholder
-    crc = binascii.crc_hqx(payload.encode('utf-8'), 0xffff)
-    payload += f"{crc:04X}"
-    return payload
+def generate_promptpay_payload(phone_number: str, amount: float) -> str:
+    phone = format_mobile(phone_number)
+    amt_str = f"{amount:.2f}"
+    amt_len = len(amt_str)
 
-def generate_qr_base64(payload: str) -> str:
-    qr = qrcode.QRCode(version=1, box_size=10, border=4)
-    qr.add_data(payload)
-    qr.make(fit=True)
+    payload = (
+        "000201"                              # Payload format
+        "010211"                              # Static QR
+        "29370016A000000677010111"           # Application ID
+        f"011300{phone}"                      # Merchant phone
+        "5303764"                             # Currency (THB)
+        f"54{amt_len:02d}{amt_str}"          # Amount with 2 decimal
+        "5802TH"                              # Country
+        "6304"                                # CRC Placeholder
+    )
 
-    img = qr.make_image(fill_color="black", back_color="white")
+    crc16 = mkCrcFun('crc-ccitt-false')
+    crc = format(crc16(payload.encode('utf-8')), '04X')
+    return payload + crc
 
+def generate_qr_base64(phone_number: str, amount: float) -> str:
+    payload = generate_promptpay_payload(phone_number, amount)
+    qr = qrcode.make(payload)
     buffer = BytesIO()
-    img.save(buffer, format="PNG")
-    qr_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
-    return qr_base64
+    qr.save(buffer, format='PNG')
+    return base64.b64encode(buffer.getvalue()).decode()
