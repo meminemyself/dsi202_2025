@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Confirm Location | PLOOKJING{% endblock %}
+{% block title %}ยืนยันการปลูกต้นไม้ | PLOOKJING{% endblock %}
 
 {% block content %}
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
@@ -73,17 +73,23 @@
 </style>
 
 <div class="confirmation-container">
-  <div class="confirmation-header"> Confirm Your Planting</div>
+  <div class="confirmation-header">ยืนยันการปลูกต้นไม้</div>
+
+  {% if tree.image %}
+    <img src="{{ tree.image.url }}" alt="{{ tree.name }}" style="width: 100%; max-height: 240px; object-fit: cover; border-radius: 12px; margin-bottom: 1.5rem;">
+  {% endif %}
+
   <div class="tree-location-box">
-    <p><strong>Tree:</strong> {{ tree.name }}</p>
-    <p><strong>Location:</strong> {{ location.name }}</p>
+    <p><strong>ต้นไม้:</strong> {{ tree.name }}</p>
+    <p><strong>สถานที่:</strong> {{ location.name }}</p>
+    <p><strong>ราคา:</strong> {{ tree.price|floatformat:2 }} บาท</p>
   </div>
 
-  <div class="confirm-actions">
-    <!-- 🔄 Redirects to view that saves UserPlanting and goes to Payment -->
-    <a href="{% url 'plant_tree_at_location' tree.id location.id %}" class="confirm-btn">✅ Proceed to Payment</a>
+  <p style="color:#666; margin-top: 1rem;">กรุณาตรวจสอบข้อมูลให้ถูกต้องก่อนกดดำเนินการ</p>
 
-    <a href="{% url 'select_location_for_tree' tree.id %}" class="back-link">← Go Back to Location Selection</a>
+  <div class="confirm-actions">
+    <a href="{% url 'plant_tree_at_location' tree.id location.id %}" class="confirm-btn">✅ ดำเนินการชำระเงิน</a>
+    <a href="{% url 'select_location_for_tree' tree.id %}" class="back-link">← กลับไปเลือกสถานที่</a>
   </div>
 </div>
 {% endblock %}

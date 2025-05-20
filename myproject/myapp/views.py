@@ -13,6 +13,7 @@ import base64
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from datetime import timedelta
 
 def generate_qr_base64(phone_number: str, amount: float, order_id=None) -> str:
     message = f"โอนเงิน {amount:.2f} บาท ไปยัง {phone_number}"
@@ -257,6 +258,8 @@ def generate_qr_base64(total):
     qr_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
     return qr_base64
 
+from datetime import timedelta  # อย่าลืม import นี้ด้วย
+
 @login_required
 def my_orders(request):
     user = request.user
@@ -266,26 +269,39 @@ def my_orders(request):
     if selected_status != 'all':
         purchases = purchases.filter(status=selected_status)
 
-    phone_number = "0612345678"  # ✅ เปลี่ยนเป็น PromptPay ของคุณจริง
+    phone_number = "0612345678"
+    now = timezone.now()
 
     for order in purchases:
+        order.items_list = order.items.all()
+        order.total_price = sum(item.quantity * item.product.price for item in order.items_list)
+        order.first_image = order.items_list.first().product.image.url if order.items_list else 'https://via.placeholder.com/80'
+
         if order.status == 'pending':
-            amount = order.quantity * order.equipment.price
-            order.qr_base64 = generate_qr_base64(phone_number, amount)
+            expired_time = order.created_at + timedelta(minutes=30)
+            if now > expired_time:
+                order.status = 'cancelled'
+                order.save()
+                continue
+            order.qr_base64 = generate_qr_base64(phone_number, order.total_price)
 
     context = {
         "purchases": purchases,
         "status_list": [
             ('all', 'ทั้งหมด', ''),
             ('pending', 'รอชำระเงิน', 'status-pending'),
+            ('verifying', 'กำลังตรวจสอบ', 'status-verifying'),
             ('preparing', 'กำลังเตรียม', 'status-preparing'),
             ('shipping', 'กำลังจัดส่ง', 'status-shipping'),
             ('delivered', 'จัดส่งสำเร็จ', 'status-delivered'),
             ('cancelled', 'ยกเลิกแล้ว', 'status-cancelled'),
         ],
+        "show_tracking_status": ['shipping', 'delivered'],
     }
 
     return render(request, 'myapp/my_orders.html', context)
+
+
 
 def search_results(request):
     query = request.GET.get('q')
@@ -454,7 +470,7 @@ from myapp.utils.promptpay import generate_qr_base64
 def equipment_payment(request, equipment_id):
     equipment = get_object_or_404(Equipment, pk=equipment_id)
     qty = int(request.GET.get("qty", 1))
-    total = float(equipment.price * qty)
+    total = float(equipment.price) * qty
 
     phone_number = "0612345678"  # เปลี่ยนได้
     qr_base64 = generate_qr_base64(phone_number, total)
@@ -491,14 +507,14 @@ def confirm_equipment_payment(request, equipment_id):
             return redirect('my_orders')
         
 @login_required
-def upload_slip(request, purchase_id):
-    purchase = get_object_or_404(Purchase, id=purchase_id, user=request.user)
+def upload_slip(request, order_id):
+    order = get_object_or_404(Purchase, id=order_id, user=request.user)
     if request.method == 'POST' and request.FILES.get('payment_slip'):
-        purchase.payment_slip = request.FILES['payment_slip']
-        purchase.status = 'pending'
-        purchase.save()
+        order.payment_slip = request.FILES['payment_slip']
+        order.status = 'verifying'  # ✅ Set to verifying immediately
+        order.save()
         return redirect('my_orders')
-    return render(request, 'myapp/upload_slip.html', {'purchase': purchase})
+
 
 @login_required
 def cancel_order(request, order_id):

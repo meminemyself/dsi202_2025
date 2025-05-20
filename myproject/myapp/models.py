@@ -79,7 +79,7 @@ class Purchase(models.Model):
     tracking_number = models.CharField(max_length=100, blank=True, null=True)
     status = models.CharField(max_length=50, choices=[
         ('pending', 'รอชำระเงิน'),
-        ('verifying', 'กำลังตรวจสอบสลิป'),
+        ('verifying', 'กำลังตรวจสอบ'),
         ('preparing', 'กำลังจัดเตรียม'),
         ('shipping', 'กำลังจัดส่ง'),
         ('delivered', 'จัดส่งสำเร็จ'),
@@ -100,3 +100,10 @@ class Purchase(models.Model):
             code = 'ORD-' + uuid.uuid4().hex[:10].upper()
             if not Purchase.objects.filter(order_number=code).exists():
                 return code
+    pass
+            
+class PurchaseItem(models.Model):
+    purchase = models.ForeignKey(Purchase, related_name="items", on_delete=models.CASCADE)
+    tree = models.ForeignKey(Tree, null=True, blank=True, on_delete=models.SET_NULL)
+    equipment = models.ForeignKey(Equipment, null=True, blank=True, on_delete=models.SET_NULL)
+    quantity = models.IntegerField(default=1)
