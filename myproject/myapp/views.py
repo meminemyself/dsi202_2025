@@ -1,10 +1,29 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from .models import Tree, Equipment, PlantingLocation, UserPlanting, Notification, NewsArticle , Purchase # อย่าลืม import
-from django.db.models import Q  # เพิ่ม Q สำหรับค้นหาแบบ flexible
+from .models import Tree, Equipment, PlantingLocation, UserPlanting, Notification, NewsArticle , Purchase
+from django.db.models import Q
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
+from django.contrib import messages
+from io import BytesIO
+from myapp.utils.promptpay import generate_qr_base64
+import qrcode
+import base64
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+def generate_qr_base64(phone_number: str, amount: float, order_id=None) -> str:
+    message = f"โอนเงิน {amount:.2f} บาท ไปยัง {phone_number}"
+    if order_id:
+        message += f" (Order #{order_id})"
+
+    payload = generate_promptpay_payload(phone_number, amount, message=message)
+    qr = qrcode.make(payload)
+    buffer = BytesIO()
+    qr.save(buffer, format='PNG')
+    return base64.b64encode(buffer.getvalue()).decode()
 
 def tree_list(request):
     sort = request.GET.get('sort')
@@ -230,32 +249,43 @@ def equipment_payment(request, equipment_id):
         'total': equipment.price * qty
     })
 
+from io import BytesIO
+def generate_qr_base64(total):
+    qr = qrcode.make(f"โอนเงิน {total:.2f} บาท ไปยังบัญชี xxx-xxx")
+    buffer = BytesIO()
+    qr.save(buffer, format="PNG")
+    qr_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+    return qr_base64
+
 @login_required
 def my_orders(request):
-    # ✅ Filter by status if selected
-    selected_status = request.GET.get('status')
-    purchases = Purchase.objects.filter(user=request.user)
-    if selected_status:
-        purchases = purchases.filter(status=selected_status)
-    for p in purchases:
-        if p.equipment:
-            p.total_price = p.equipment.price * p.quantity
-        else:
-            p.total_price = 0
-    # ✅ Prepare status list for filter tabs
-    status_list = [
-    ('pending', 'รอชำระเงิน', 'status-pending'),
-    ('preparing', 'กำลังจัดเตรียม', 'status-processing'),
-    ('shipping', 'กำลังจัดส่ง', 'status-shipping'),
-    ('delivered', 'จัดส่งสำเร็จ', 'status-delivered'),
-    ('cancelled', 'ยกเลิกแล้ว', 'status-cancelled'),
-]
+    user = request.user
+    selected_status = request.GET.get('status', 'all')
 
-    return render(request, 'myapp/my_orders.html', {
-        'purchases': purchases.order_by('-created_at'),
-        'status_list': status_list,
-        'selected_status': selected_status,
-    })
+    purchases = Purchase.objects.filter(user=user)
+    if selected_status != 'all':
+        purchases = purchases.filter(status=selected_status)
+
+    phone_number = "0612345678"  # ✅ เปลี่ยนเป็น PromptPay ของคุณจริง
+
+    for order in purchases:
+        if order.status == 'pending':
+            amount = order.quantity * order.equipment.price
+            order.qr_base64 = generate_qr_base64(phone_number, amount)
+
+    context = {
+        "purchases": purchases,
+        "status_list": [
+            ('all', 'ทั้งหมด', ''),
+            ('pending', 'รอชำระเงิน', 'status-pending'),
+            ('preparing', 'กำลังเตรียม', 'status-preparing'),
+            ('shipping', 'กำลังจัดส่ง', 'status-shipping'),
+            ('delivered', 'จัดส่งสำเร็จ', 'status-delivered'),
+            ('cancelled', 'ยกเลิกแล้ว', 'status-cancelled'),
+        ],
+    }
+
+    return render(request, 'myapp/my_orders.html', context)
 
 def search_results(request):
     query = request.GET.get('q')
@@ -446,20 +476,20 @@ def confirm_equipment_payment(request, equipment_id):
         slip_file = request.FILES.get('payment_slip')
 
         if slip_file:
-            quantity = int(request.POST.get("qty", 1))  # ✅ เปลี่ยนเป็น POST
+            quantity = int(request.POST.get("qty", 1))
             purchase = Purchase.objects.create(
                 user=request.user,
                 equipment=equipment,
-                quantity = int(request.POST.get("qty", 1)),
+                quantity=quantity,
                 name=request.POST.get('name'),
                 tel=request.POST.get('tel'),
                 address=request.POST.get('address'),
                 payment_slip=slip_file,
                 status='pending'
             )
-            print("✅ สร้าง Purchase แล้ว:", purchase.id)
             messages.success(request, "ส่งข้อมูลสำเร็จ กรุณารอการตรวจสอบจากแอดมิน")
             return redirect('my_orders')
+        
 @login_required
 def upload_slip(request, purchase_id):
     purchase = get_object_or_404(Purchase, id=purchase_id, user=request.user)
@@ -474,7 +504,7 @@ def upload_slip(request, purchase_id):
 def cancel_order(request, order_id):
     order = get_object_or_404(Purchase, id=order_id, user=request.user)
     if order.status == 'pending':
-        order.status = 'cancelled'  # หรือจะใช้ delete() ก็ได้ถ้าไม่อยากเก็บ
+        order.status = 'cancelled'
         order.save()
         messages.success(request, "คำสั่งซื้อถูกยกเลิกแล้ว")
     else:
@@ -482,31 +512,21 @@ def cancel_order(request, order_id):
     return redirect('my_orders')
 
 
-@login_required
-def upload_slip_form(request, order_id):
+def upload_slip(request, order_id):
     order = get_object_or_404(Purchase, id=order_id, user=request.user)
-    
-    if request.method == 'POST':
-        if 'payment_slip' in request.FILES:
-            order.payment_slip = request.FILES['payment_slip']
-            order.status = 'pending'
-            order.save()
-            messages.success(request, "แนบสลิปเรียบร้อยแล้ว กรุณารอการตรวจสอบ")
-            return redirect('my_orders')
-        else:
-            messages.error(request, "กรุณาแนบไฟล์สลิป")
-    
-    return render(request, 'myapp/upload_slip_form.html', {'order': order})
+    if request.method == 'POST' and request.FILES.get('payment_slip'):
+        order.payment_slip = request.FILES['payment_slip']
+        order.status = 'verifying'  # 👈 เปลี่ยนสถานะทันที
+        order.save()
+        return redirect('my_orders')
 
-# ✅ แสดงคำสั่งซื้อที่รอการตรวจสอบ
 @login_required
 def admin_payment_verification(request):
     if not request.user.is_staff:
-        return redirect('home')  # ป้องกัน non-admin
+        return redirect('home')
     orders = Purchase.objects.filter(status='pending', payment_slip__isnull=False)
     return render(request, 'myapp/admin_verify_payments.html', {'orders': orders})
 
-# ✅ ยืนยันการชำระเงิน
 @login_required
 def verify_payment(request, order_id):
     order = get_object_or_404(Purchase, id=order_id)
@@ -515,7 +535,6 @@ def verify_payment(request, order_id):
     messages.success(request, 'ยืนยันการชำระเงินเรียบร้อยแล้ว')
     return redirect('admin_payment_verification')
 
-# ❌ ยกเลิกคำสั่งซื้อ
 @login_required
 def cancel_payment(request, order_id):
     order = get_object_or_404(Purchase, id=order_id)
@@ -548,15 +567,40 @@ def create_pending_order(request, equipment_id):
 def create_pending_order(request, equipment_id):
     if request.method == 'POST':
         equipment = get_object_or_404(Equipment, id=equipment_id)
+        qty = int(request.POST.get("qty", 1))
         Purchase.objects.create(
             user=request.user,
             equipment=equipment,
-            quantity=int(request.POST.get('qty', 1)),
+            quantity=qty,
             name=request.POST.get('name'),
             tel=request.POST.get('tel'),
             address=request.POST.get('address'),
-            status='pending'
+            status='pending',
         )
-        messages.success(request, "ยืนยันคำสั่งซื้อเรียบร้อยแล้ว กรุณาแนบสลิปภายหลัง")
+        messages.success(request, "สร้างรายการเรียบร้อยแล้ว คุณสามารถแนบสลิปภายหลังได้ในหน้าคำสั่งซื้อของฉัน")
         return redirect('my_orders')
     return redirect('equipment_payment', equipment_id=equipment_id)
+
+@csrf_exempt
+def auto_cancel_order(request, order_id):
+    if request.method == "POST":
+        try:
+            order = Purchase.objects.get(id=order_id, status='pending')
+            order.status = 'cancelled'
+            order.save()
+            return JsonResponse({'status': 'cancelled'})
+        except Purchase.DoesNotExist:
+            return JsonResponse({'status': 'not_found'})
+    return JsonResponse({'status': 'invalid'})
+
+@login_required
+def delete_slip(request, purchase_id):
+    purchase = get_object_or_404(Purchase, id=purchase_id, user=request.user)
+    if purchase.payment_slip:
+        purchase.payment_slip.delete()
+        purchase.payment_slip = None
+        purchase.save()
+    return redirect('my_orders')
+
+
+

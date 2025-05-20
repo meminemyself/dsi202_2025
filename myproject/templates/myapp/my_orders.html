@@ -94,6 +94,7 @@
     display: inline-block;
   }
   .status-pending { background: #FFF1E5; color: #FB7E2B; }
+  .status-verifying { background: #FFFDE7; color: #F9A825; }
   .status-preparing { background: #FFF9DB; color: #B28A00; }
   .status-shipping { background: #E0F2FF; color: #0277BD; }
   .status-delivered { background: #E6F4EC; color: #0D6E3E; }
@@ -105,6 +106,7 @@
     left: 0; top: 0;
     width: 100%; height: 100%;
     background-color: rgba(0, 0, 0, 0.4);
+    overflow-y: auto;
   }
   .modal-content {
     background-color: #fff;
@@ -112,6 +114,8 @@
     padding: 2rem;
     border-radius: 14px;
     max-width: 540px;
+    max-height: 80vh;
+    overflow-y: auto;
     position: relative;
     font-family: 'Prompt', sans-serif;
   }
@@ -128,14 +132,13 @@
     padding: 0.5rem 1rem;
     border-radius: 10px;
     font-size: 0.9rem;
-    margin: 0.3rem 0.2rem 0;
     font-weight: 600;
     text-decoration: none;
     font-family: 'Prompt', sans-serif;
     border: none;
+    margin-top: 0.5rem;
   }
   .btn-slip { background: #FFF1E5; color: #FB7E2B; cursor: pointer; }
-  .btn-cancel { background: #FFECE8; color: #D55E02; }
 </style>
 
 <div class="orders-page">
@@ -147,13 +150,15 @@
   </div>
   <div class="order-list">
     {% for order in purchases %}
-      <div class="order-item" onclick="openModal('{{ order.id }}')">
+      <div class="order-item" onclick="openModal('modal-{{ order.id }}')">
         <div class="order-summary">
           <img src="{{ order.equipment.image_url }}" alt="{{ order.equipment.name }}">
           <div class="order-info">
             <h4>{{ order.equipment.name }}</h4>
             <p>x {{ order.quantity }}</p>
             <p class="order-status status-{{ order.status }}">สถานะ: {{ order.get_status_display }}</p>
+            <p style="font-size: 0.8rem; color: #888;">หมายเลข: {{ order.order_number }}</p>
+            <p style="font-size: 0.8rem; color: #aaa;">สั่งเมื่อ {{ order.created_at|date:'d/m/Y H:i' }}</p>
           </div>
         </div>
         <div>&rsaquo;</div>
@@ -161,30 +166,46 @@
 
       <div id="modal-{{ order.id }}" class="modal">
         <div class="modal-content">
-          <span class="close" onclick="closeModal('{{ order.id }}')">&times;</span>
-          <h3>📄 รายละเอียดคำสั่งซื้อ</h3>
-
-          <h4 style="margin-top: 1rem; color: #0D3F31;">🛒 สินค้า</h4>
-          <p><strong>{{ order.equipment.name }}</strong></p>
-          <p>จำนวน: {{ order.quantity }} ชิ้น</p>
-          <p>ราคาต่อชิ้น: {{ order.equipment.price|floatformat:2 }} บาท</p>
-          <p><strong>ยอดรวม:</strong> {{ order.total_price|floatformat:2 }} บาท</p>
-
-          <h4 style="margin-top: 1.2rem; color: #0D3F31;">📦 ข้อมูลผู้รับสินค้า</h4>
-          <p>{{ order.name }} | {{ order.tel }}</p>
-          <p>{{ order.address }}</p>
-
-          <h4 style="margin-top: 1.2rem; color: #0D3F31;">📅 วันที่สั่งซื้อ</h4>
+          <span class="close" onclick="closeModal('modal-{{ order.id }}')">&times;</span>
+          <h3>รายละเอียดคำสั่งซื้อ</h3>
+          <h4>หมายเลขคำสั่งซื้อ</h4>
+          <p>{{ order.order_number }}</p>
+          <h4>รายการสินค้า</h4>
+          <p>{{ order.equipment.name }} × {{ order.quantity }} ชิ้น ({{ order.total_price|floatformat:2 }} บาท)</p>
+          <h4>ข้อมูลการจัดส่ง</h4>
+          <p>{{ order.name }} ({{ order.tel }})</p>
+          <p style="white-space: pre-line;">{{ order.address }}</p>
+          <h4>วันที่สั่งซื้อ</h4>
           <p>{{ order.created_at|date:'d/m/Y เวลา H:i' }}</p>
 
-          {% if order.tracking_number and order.status in 'shipping delivered' %}
-            <h4 style="margin-top: 1.2rem; color: #0D3F31;">🚚 หมายเลขพัสดุ</h4>
-            <p>{{ order.tracking_number }}</p>
+          {% if order.status == 'pending' and order.qr_base64 and not order.payment_slip %}
+            <h4>การชำระเงิน</h4>
+            <button class="action-btn btn-slip" onclick="toggleQR('{{ order.id }}')">แสดง QR สำหรับชำระเงิน</button>
+            <div id="qr-container-{{ order.id }}" style="display:none; margin-top:1rem;">
+              <img src="data:image/png;base64,{{ order.qr_base64|safe }}" alt="QR Code" style="width: 200px; border-radius: 12px; border: 1px solid #ddd;">
+            </div>
+            <h4>แนบสลิปการชำระเงิน</h4>
+            <form method="POST" action="{% url 'upload_slip' order.id %}" enctype="multipart/form-data">
+              {% csrf_token %}
+              <input type="file" name="payment_slip" accept="image/*" required>
+              <button type="submit" class="action-btn btn-slip">อัปโหลดสลิป</button>
+            </form>
+            <script>startCountdown('{{ order.id }}', 300);</script>
+          {% elif order.payment_slip %}
+
+            <h4>สลิปการชำระเงิน</h4>
+            <button onclick="showSlipModal('{{ order.id }}')" class="action-btn btn-slip">ดูสลิป</button>
+            <div id="slip-modal-{{ order.id }}" class="modal">
+              <div class="modal-content">
+                <span class="close" onclick="closeModal('slip-modal-{{ order.id }}')">&times;</span>
+                <img src="{{ order.payment_slip.url }}" alt="สลิป" style="max-width: 100%; border-radius: 8px;">
+              </div>
+            </div>
           {% endif %}
 
-          {% if order.payment_slip and order.status in 'preparing shipping delivered' %}
-            <h4 style="margin-top: 1.2rem; color: #0D3F31;">💳 สลิปชำระเงิน</h4>
-            <a href="{{ order.payment_slip.url }}" target="_blank" class="action-btn btn-slip">ดูสลิป</a>
+          {% if order.tracking_number and order.status == 'shipping' or order.status == 'delivered' %}
+            <h4>หมายเลขพัสดุ:</h4>
+            <p>{{ order.tracking_number }}</p>
           {% endif %}
         </div>
       </div>
@@ -196,10 +217,40 @@
 
 <script>
   function openModal(id) {
-    document.getElementById('modal-' + id).style.display = 'block';
+    document.getElementById(id).style.display = 'block';
   }
   function closeModal(id) {
-    document.getElementById('modal-' + id).style.display = 'none';
+    document.getElementById(id).style.display = 'none';
+  }
+  function toggleQR(orderId) {
+    const qr = document.getElementById(`qr-container-${orderId}`);
+    qr.style.display = qr.style.display === 'block' ? 'none' : 'block';
+  }
+  function showSlipModal(id) {
+    document.getElementById('slip-modal-' + id).style.display = 'block';
+  }
+  function startCountdown(orderId, seconds) {
+    const display = document.getElementById(`countdown-${orderId}`);
+    const interval = setInterval(() => {
+      if (seconds <= 0) {
+        clearInterval(interval);
+        display.innerText = 'หมดเวลาชำระเงิน';
+        autoCancel(orderId);
+      } else {
+        const min = Math.floor(seconds / 60);
+        const sec = seconds % 60;
+        display.innerText = `เหลือเวลา: ${min}:${sec.toString().padStart(2, '0')}`;
+        seconds--;
+      }
+    }, 1000);
+  }
+  function autoCancel(orderId) {
+    fetch(`/auto-cancel/${orderId}/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+    }).then(res => res.json()).then(data => {
+      if (data.status === 'cancelled') location.reload();
+    });
   }
 </script>
 {% endblock %}

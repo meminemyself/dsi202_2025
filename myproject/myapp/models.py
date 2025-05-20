@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+import uuid
 
 class Tree(models.Model):
     name = models.CharField(max_length=255)
@@ -78,9 +79,24 @@ class Purchase(models.Model):
     tracking_number = models.CharField(max_length=100, blank=True, null=True)
     status = models.CharField(max_length=50, choices=[
         ('pending', 'รอชำระเงิน'),
+        ('verifying', 'กำลังตรวจสอบสลิป'),
         ('preparing', 'กำลังจัดเตรียม'),
         ('shipping', 'กำลังจัดส่ง'),
         ('delivered', 'จัดส่งสำเร็จ'),
         ('cancelled', 'ยกเลิกแล้ว'),
     ], default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
+    qr_base64 = models.TextField(blank=True, null=True) 
+    order_number = models.CharField(max_length=20, unique=True, blank=True, null=True)  # ✅ unique
+
+    def save(self, *args, **kwargs):
+        if not self.order_number:
+            # สร้างรหัสที่ไม่ซ้ำกันแน่นอน
+            self.order_number = self.generate_unique_order_number()
+        super().save(*args, **kwargs)
+
+    def generate_unique_order_number(self):
+        while True:
+            code = 'ORD-' + uuid.uuid4().hex[:10].upper()
+            if not Purchase.objects.filter(order_number=code).exists():
+                return code
