@@ -70,28 +70,24 @@ class PaymentProof(models.Model):
 
 class Purchase(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField()
     name = models.CharField(max_length=255)
     tel = models.CharField(max_length=20)
     address = models.TextField()
     payment_slip = models.ImageField(upload_to='slips/', blank=True, null=True)
     tracking_number = models.CharField(max_length=100, blank=True, null=True)
     status = models.CharField(max_length=50, choices=[
-        ('pending', 'รอชำระเงิน'),
         ('verifying', 'กำลังตรวจสอบ'),
         ('preparing', 'กำลังจัดเตรียม'),
         ('shipping', 'กำลังจัดส่ง'),
         ('delivered', 'จัดส่งสำเร็จ'),
         ('cancelled', 'ยกเลิกแล้ว'),
-    ], default='pending')
+    ], default='verifying')
     created_at = models.DateTimeField(auto_now_add=True)
     qr_base64 = models.TextField(blank=True, null=True) 
-    order_number = models.CharField(max_length=20, unique=True, blank=True, null=True)  # ✅ unique
+    order_number = models.CharField(max_length=20, unique=True, blank=True, null=True)
 
     def save(self, *args, **kwargs):
         if not self.order_number:
-            # สร้างรหัสที่ไม่ซ้ำกันแน่นอน
             self.order_number = self.generate_unique_order_number()
         super().save(*args, **kwargs)
 
@@ -100,8 +96,13 @@ class Purchase(models.Model):
             code = 'ORD-' + uuid.uuid4().hex[:10].upper()
             if not Purchase.objects.filter(order_number=code).exists():
                 return code
-    pass
-            
+
+    @property
+    def total_price(self):
+        return sum(item.quantity * (
+            item.equipment.price if item.equipment else item.tree.price
+        ) for item in self.items.all())
+
 class PurchaseItem(models.Model):
     purchase = models.ForeignKey(Purchase, related_name="items", on_delete=models.CASCADE)
     tree = models.ForeignKey(Tree, null=True, blank=True, on_delete=models.SET_NULL)

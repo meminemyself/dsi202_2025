@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Tree, Equipment, PlantingLocation, UserPlanting, Notification, Purchase, NewsArticle
+from .models import Tree, Equipment, PlantingLocation, UserPlanting, Notification, Purchase, NewsArticle, PurchaseItem
 
 
 @admin.register(Tree)
@@ -39,16 +39,23 @@ class NotificationAdmin(admin.ModelAdmin):
 @admin.register(Purchase)
 class PurchaseAdmin(admin.ModelAdmin):
     list_display = (
-        'user', 'equipment', 'quantity', 'name', 'tel', 'display_status',
-        'tracking_number', 'created_at', 'payment_slip'
+        'order_number', 'user', 'item_summary', 'name', 'tel',
+        'display_status', 'tracking_number', 'created_at', 'payment_slip'
     )
     list_filter = ('status', 'created_at')
     readonly_fields = ('created_at',)
     fields = (
-        'user', 'equipment', 'quantity',
-        'name', 'tel', 'address',  # เพิ่มฟิลด์ข้อมูลลูกค้า
+        'user',
+        'name', 'tel', 'address',
         'status', 'payment_slip', 'tracking_number', 'created_at'
     )
+
+    def item_summary(self, obj):
+        return ", ".join(
+            f"{item.equipment.name if item.equipment else item.tree.name} × {item.quantity}"
+            for item in obj.items.all()
+        )
+    item_summary.short_description = "สินค้าในออเดอร์"
 
     def display_status(self, obj):
         return dict(Purchase._meta.get_field('status').choices).get(obj.status)

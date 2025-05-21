@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}ยืนยันคำสั่งซื้อ | PLOOKJING{% endblock %}
+
+{% block content %}
+<div style="max-width: 700px; margin: 3rem auto; text-align: center;">
+  <h1 style="color: #0D3F31;">🎉 สั่งซื้อเรียบร้อย!</h1>
+  <p>ระบบได้รับข้อมูลของคุณแล้ว กรุณาชำระเงินและแนบสลิปในภายหลัง</p>
+  <a href="{% url 'my_orders' %}" style="margin-top: 2rem; display: inline-block; background: #0D6E3E; color: white; padding: 0.8rem 1.5rem; border-radius: 8px;">ดูคำสั่งซื้อของฉัน</a>
+</div>
+{% endblock %}

@@ -4,6 +4,7 @@ from django.contrib.auth import views as auth_views
 from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
+from myapp.views import select_address_multi, confirm_cart_order, create_order_multi
 urlpatterns = [
     path('', views.home, name='home'),
     path('trees/', views.tree_list, name='tree_list'),
@@ -53,12 +54,13 @@ urlpatterns = [
     path('signup/', views.signup, name='signup'),
     path('lockout/', TemplateView.as_view(template_name='lockout.html'), name='account_lockout'),
     path('process-cart/', views.process_cart_items, name='process_cart_items'),
-    path('confirm-cart/', views.split_cart_confirmation, name='split_cart_confirmation'),
-    path('equipment/confirm-payment/<int:equipment_id>/', views.confirm_equipment_payment, name='confirm_equipment_payment'),
+    path('confirm-cart/', confirm_cart_order, name='confirm_cart_order'),    path('equipment/confirm-order/', views.confirm_equipment_order, name='confirm_equipment_order'),
     path('orders/upload-slip/<int:purchase_id>/', views.upload_slip, name='upload_slip'),
     path('cancel-order/<int:order_id>/', views.cancel_order, name='cancel_order'),
     path('equipment/create-order/<int:equipment_id>/', views.create_pending_order, name='create_pending_order'),     
     path('my-orders/upload-slip/<int:order_id>/', views.upload_slip, name='upload_slip'),    
     path('auto-cancel/<int:order_id>/', views.auto_cancel_order, name='auto_cancel_order'),
     path('delete-slip/<int:purchase_id>/', views.delete_slip, name='delete_slip'),
+    path('select-address-multi/', select_address_multi, name='select_address_multi'),    path('confirm-cart/', confirm_cart_order, name='confirm_cart_order'),   
+    path('create-order-multi/', create_order_multi, name='create_order_multi'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

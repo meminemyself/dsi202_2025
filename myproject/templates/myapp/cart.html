@@ -178,19 +178,20 @@
           {% endif %}
         </td>
         <td>
-          <div class="qty-form">
-            <form method="post" action="{% url 'update_cart' item.type item.item.id %}">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="decrease">
-              <button type="submit">−</button>
-            </form>
+          <form method="post" action="{% url 'update_cart' item.type item.item.id %}" class="qty-form">
+            {% csrf_token %}
+          
+            {% if item.quantity == 1 %}
+              <button type="submit" name="action" value="decrease"
+                      onclick="return confirm('คุณต้องการลบสินค้าออกจากตะกร้าหรือไม่?')">−</button>
+            {% else %}
+              <button type="submit" name="action" value="decrease">−</button>
+            {% endif %}
+          
             <div class="qty-box">{{ item.quantity }}</div>
-            <form method="post" action="{% url 'update_cart' item.type item.item.id %}">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="increase">
-              <button type="submit">+</button>
-            </form>
-          </div>
+          
+            <button type="submit" name="action" value="increase">+</button>
+          </form>
         </td>
         <td style="text-align: right;">{{ item.item.price|floatformat:2 }} บาท</td>
         <td style="text-align: right; color: #FB7E2B; font-weight: bold;">{{ item.total_price|floatformat:2 }} บาท</td>

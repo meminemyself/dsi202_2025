@@ -144,12 +144,16 @@
     <p>กรุณาตรวจสอบรายการและดำเนินการชำระเงินภายในระยะเวลาที่กำหนด</p>
   </div>
 
-  <div class="item-summary">
+  <div class="item-summary" style="background: #F8F9FA; padding: 1rem; border-radius: 12px;">
     <img src="{{ equipment.image_url }}" alt="{{ equipment.name }}">
     <div class="item-info">
-      <h3>{{ equipment.name }}</h3>
-      <p>จำนวน: {{ qty }} ชิ้น</p>
-      <p>ราคาต่อชิ้น: {{ equipment.price|floatformat:2 }} บาท</p>
+      <h3 style="margin-bottom: 0.5rem;">{{ equipment.name }}</h3>
+      <p style="margin: 0.2rem 0;"><strong>จำนวน:</strong> {{ qty }} ชิ้น</p>
+      <p style="margin: 0.2rem 0;"><strong>ราคาต่อชิ้น:</strong> {{ equipment.price|floatformat:2 }} บาท</p>
+      <p><strong>รวม: {{ total|floatformat:2 }} บาท</strong></p>
+      <p style="margin: 0.8rem 0 0; font-size: 1.2rem; color: #FB7E2B; font-weight: bold;">
+        💰 รวม: {{ total|floatformat:2 }} บาท
+      </p>
     </div>
   </div>
 
@@ -170,15 +174,19 @@
     <p id="countdown" style="font-weight: bold; color: #FB7E2B;"></p>
   </div>
 
-  <form method="post" action="{% url 'create_pending_order' equipment.id %}" id="createOrderLaterForm">
+  <form method="post" action="{% url 'create_pending_order' equipment.id %}" enctype="multipart/form-data" id="createOrderLaterForm">
     {% csrf_token %}
     <input type="hidden" name="name" value="{{ name }}">
     <input type="hidden" name="tel" value="{{ tel }}">
     <input type="hidden" name="address" value="{{ full_address }}">
     <input type="hidden" name="qty" value="{{ qty }}">
-    <button type="submit" class="upload-btn">ยืนยันคำสั่งซื้อ</button>
+    <label class="file-label">แนบสลิปชำระเงิน <span>*</span></label>
+    <div class="file-row">
+      <input type="file" id="paymentSlip" name="payment_slip" accept="image/*" required>
+      <button type="button" class="clear-btn" onclick="clearFile()" id="clearBtn" style="display: none;">ลบไฟล์</button>
+    </div>
+    <button type="submit" id="submitBtn" class="upload-btn disabled" disabled>ยืนยันคำสั่งซื้อ</button>
   </form>
-</div>
 
 <script>
   let seconds = 300;
