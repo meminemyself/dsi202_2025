@@ -1,162 +1,113 @@
 {% extends 'base.html' %}
-{% block title %}Select Planting Location | PLOOKJING{% endblock %}
+{% block title %}เลือกจังหวัดปลูกต้นไม้{% endblock %}
+{% load static %}
 
 {% block content %}
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
-
 <style>
   body {
+    background: #F0FAF5;
     font-family: 'Prompt', sans-serif;
-    background-color: #F6F9FB;
   }
 
-  .location-page {
+  .location-container {
     max-width: 1000px;
-    margin: 2rem auto;
-    padding: 1.5rem;
+    margin: 2.5rem auto;
+    padding: 2.5rem;
     background: white;
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-radius: 20px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
   }
 
-  .location-header {
-    font-size: 1.8rem;
+  .location-title {
+    font-size: 2rem;
     font-weight: bold;
     color: #0D3F31;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    justify-content: center;
+    margin-bottom: 1rem;
+    text-align: center;
   }
 
-  .search-form {
-    display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-    margin-bottom: 2rem;
-  }
-
-  .search-form input {
-    font-family: 'Prompt', sans-serif;
-    padding: 0.7rem 1rem;
-    border-radius: 9999px;
-    border: 2px solid #0D3F31;
-    width: 300px;
-    font-size: 1rem;
-    outline: none;
-  }
-
-  .search-form button {
-    padding: 0.7rem 1.5rem;
-    background-color: #0D6E3E;
+  .tree-highlight {
+    background: #FB7E2B;
     color: white;
-    border: none;
-    border-radius: 9999px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.3s ease;
-  }
-
-  .search-form button:hover {
-    background-color: #095C34;
-  }
-
-  .location-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-  }
-
-  .location-card {
-    background-color: #F3FDF6;
-    border: 1px solid #CCEED4;
-    padding: 1.2rem;
+    font-size: 1.2rem;
+    padding: 0.6rem 1.4rem;
     border-radius: 12px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.06);
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    display: inline-block;
+    margin: 0 auto 2rem;
+    text-align: center;
   }
 
-  .location-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 14px rgba(0,0,0,0.1);
-    background-color: #E6FAF0;
-  }
-
-  .location-card h3 {
-    margin: 0 0 0.5rem 0;
-    color: #0D3F31;
+  .region-label {
     font-size: 1.1rem;
     font-weight: 600;
+    color: #1A6450;
+    margin: 1.5rem 0 0.7rem;
   }
 
-  .location-card p {
-    margin: 0;
-    font-size: 0.9rem;
-    color: #444;
-    line-height: 1.4;
+  .province-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
   }
 
-  .intro-box {
+  .province-btn {
+    display: block;
     text-align: center;
+    padding: 0.9rem 1.1rem;
+    background: #E0F2EA;
+    color: #0D3F31;
+    border-radius: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: 0.25s ease;
     font-size: 1rem;
-    padding: 2rem;
-    color: #444;
-    border-top: 1px solid #ddd;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
   }
 
-  .map-placeholder {
-    margin-top: 2rem;
-    padding: 2rem;
-    background: #EFF7F1;
-    text-align: center;
-    border-radius: 12px;
-    font-size: 1.1rem;
-    color: #2E7D32;
-    font-weight: 500;
-    border: 1px dashed #B5D6BB;
+  .province-btn:hover {
+    background: #C3ECD6;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
   }
 
-  .contact-link {
-    color: #FB7E2B;
-    text-decoration: none;
-    font-weight: bold;
+  .province-form {
+    display: inline;
   }
 
-  .contact-link:hover {
-    text-decoration: underline;
+  .region-section {
+    margin-bottom: 2rem;
   }
 </style>
 
-<div class="location-page">
-  <div class="location-header"> Select a Planting Location</div>
+<div class="location-container">
+  <div class="location-title">เลือกจังหวัดสำหรับปลูกต้นไม้</div>
+  <div class="tree-highlight">🌳 {{ tree.name }}</div>
 
-  <form method="get" class="search-form">
-    <input type="text" name="q" value="{{ query }}" placeholder="Search province..." />
-    <button type="submit">Search</button>
-  </form>
+  {% regroup locations by location_type as region_list %}
 
-  {% if locations %}
-  <div class="location-grid">
-    {% for location in locations %}
-    <div class="location-card" onclick="window.location.href='{% url 'confirm_location' tree.id location.id %}'">
-      <h3>{{ location.name }}</h3>
-      <p>{{ location.description|truncatechars:100 }}</p>
+  {% for region in region_list %}
+  <div class="region-section">
+    <div class="region-label">🗺️ ภูมิภาค: {{ region.grouper }}</div>
+    <div class="province-grid">
+      {% for location in region.list %}
+        <form method="post" action="{% url 'plant_tree_at_location' tree.id location.id %}" class="province-form">
+          {% csrf_token %}
+          <button type="submit" class="province-btn">{{ location.name }}</button>
+        </form>
+      {% endfor %}
     </div>
-    {% endfor %}
   </div>
-  {% else %}
-  <div class="intro-box">
-    No locations available at this time. Please check back later or
-    <a href="{% url 'contact' %}" class="contact-link">contact us</a> if you want to suggest a site.
-  </div>
-  {% endif %}
-
-  <div class="map-placeholder">
-    🗌 Interactive Thailand Map Coming Soon!<br>
-    You'll be able to click on provinces to select available planting sites.
-  </div>
+  {% endfor %}
 </div>
+<script>
+  const searchInput = document.getElementById("province-search");
+  searchInput?.addEventListener("input", function () {
+    const filter = this.value.toLowerCase();
+    document.querySelectorAll(".province-btn").forEach(btn => {
+      const name = btn.innerText.toLowerCase();
+      btn.parentElement.style.display = name.includes(filter) ? "" : "none";
+    });
+  });
+</script>
 {% endblock %}

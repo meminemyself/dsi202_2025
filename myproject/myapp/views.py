@@ -166,10 +166,17 @@ def about(request):
 @login_required
 def select_location_for_tree(request, tree_id):
     tree = get_object_or_404(Tree, id=tree_id)
-    locations = PlantingLocation.objects.all()
+    query = request.GET.get('q', '')
+
+    if query:
+        locations = PlantingLocation.objects.filter(name__icontains=query)
+    else:
+        locations = PlantingLocation.objects.all()
+
     return render(request, 'myapp/select_location_for_tree.html', {
         'tree': tree,
-        'locations': locations
+        'locations': locations,
+        'query': query
     })
 
 @login_required
@@ -203,27 +210,20 @@ def contact(request):
 def confirm_location(request, tree_id, location_id):
     tree = get_object_or_404(Tree, id=tree_id)
     location = get_object_or_404(PlantingLocation, id=location_id)
-    
     return render(request, 'myapp/confirm_location.html', {
         'tree': tree,
         'location': location
-    } ) 
+    })
 
 @login_required
 def select_location_for_tree(request, tree_id):
     tree = get_object_or_404(Tree, id=tree_id)
-    query = request.GET.get('q', '')
-    
-    if query:
-        locations = PlantingLocation.objects.filter(name__icontains=query)
-    else:
-        locations = PlantingLocation.objects.all()
-        
+    locations = PlantingLocation.objects.all()
     return render(request, 'myapp/select_location_for_tree.html', {
         'tree': tree,
-        'locations': locations,
-        'query': query,
+        'locations': locations
     })
+
 
 def payment_success(request, tree_id):
     # ทำอะไรก็ได้ เช่นแสดงผล, ข้อมูลต้นไม้
@@ -453,20 +453,43 @@ def confirm_cart(request):
             'qty': c['qty'],
             'total': item_total
         })
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
-    @require_POST
-    def process_cart_items(request):
-    # ดำเนินการต่อไปยังหน้าเลือกที่อยู่หรือยืนยัน
-        return redirect('select_address')
+@login_required
+def process_cart_items(request):
+    cart = request.session.get('cart', [])
 
-    qr_base64 = generate_qr_base64("0612348750", total)
+    if not cart:
+        messages.error(request, "ยังไม่มีสินค้าในตะกร้า")
+        return redirect('cart')
+
+    # แยกประเภทสินค้า
+    has_tree = any(item['type'] == 'tree' for item in cart)
+    has_equipment = any(item['type'] == 'equipment' for item in cart)
+
+    # บันทึก cart ลง session สำหรับใช้ในขั้นถัดไป
+    request.session['checkout_cart'] = cart
+
+    if has_tree and has_equipment:
+        return redirect('split_cart_confirmation')
     
-    return render(request, 'myapp/payment_all_items.html', {
-        'items': items,
-        'total': total,
-        'qr_base64': qr_base64,
-        # ข้อมูลที่อยู่อาจเก็บใน session หรือ POST มาก็ได้
-    })
+    elif has_tree:
+        # 🔍 ตรวจให้แน่ใจว่ามี tree_id ก่อน redirect
+        try:
+            tree_item = next(item for item in cart if item['type'] == 'tree')
+            tree_id = tree_item['id']
+            return redirect('select_location_for_tree', tree_id=tree_id)
+        except StopIteration:
+            messages.error(request, "ไม่พบต้นไม้ในตะกร้า")
+            return redirect('cart')
+
+    elif has_equipment:
+        return redirect('select_address_multi')
+
+    return redirect('cart')
+
 def start_planting_redirect(request):
     tree_id = request.POST.get('tree_id')
     if tree_id:
@@ -487,30 +510,74 @@ def signup(request):
 from django.shortcuts import redirect
 from django.contrib import messages
 
+# ✅ views.py (เฉพาะฟังก์ชัน process_cart_items)
+from django.contrib import messages
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+
+from django.contrib import messages
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+
 @login_required
 def process_cart_items(request):
     cart = request.session.get('cart', [])
+
     if not cart:
         messages.error(request, "ยังไม่มีสินค้าในตะกร้า")
         return redirect('cart')
 
-    # แยกประเภท
     has_tree = any(item['type'] == 'tree' for item in cart)
     has_equipment = any(item['type'] == 'equipment' for item in cart)
 
-    # บันทึก cart สำหรับขั้นตอนต่อไป
     request.session['checkout_cart'] = cart
 
     if has_tree and has_equipment:
-        return redirect('split_cart_confirmation')  # ✅ แสดงหน้าถามว่าจะจัดแยกอย่างไร
+        print(">>> CART มีทั้ง TREE และ EQUIPMENT:", cart)
+        return redirect('split_cart_confirmation')
+
     elif has_tree:
-        tree_id = next(item['id'] for item in cart if item['type'] == 'tree')
-        return redirect('select_location_for_tree', tree_id=tree_id)
+        try:
+            tree_item = next(item for item in cart if item['type'] == 'tree')
+            tree_id = tree_item['id']
+            print(">>> CART:", cart)
+            print(">>> REDIRECT TO TREE:", tree_id)
+            return redirect('select_location_for_tree', tree_id=tree_id)
+        except StopIteration:
+            messages.error(request, "ไม่พบต้นไม้ในตะกร้า")
+            return redirect('cart')
+
     elif has_equipment:
-        equipment_id = next(item['id'] for item in cart if item['type'] == 'equipment')
-        return redirect('select_address_multi')  # ✅ หน้าใหม่
+        print(">>> CART มีแต่ EQUIPMENT:", cart)
+        return redirect('select_address_multi')
+
+    print(">>> CART EMPTY OR INVALID:", cart)
+    return redirect('cart')
+
+
+
+
+# ✅ select_location_for_tree.html (check this file exists in templates/myapp/)
+# ✅ Ensure the view is like this:
+from django.shortcuts import render, get_object_or_404
+from .models import Tree, PlantingLocation
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def select_location_for_tree(request, tree_id):
+    tree = get_object_or_404(Tree, id=tree_id)
+    query = request.GET.get('q', '')
+
+    if query:
+        locations = PlantingLocation.objects.filter(name__icontains=query)
     else:
-        return redirect('cart')
+        locations = PlantingLocation.objects.all()
+
+    return render(request, 'myapp/select_location_for_tree.html', {
+        'tree': tree,
+        'locations': locations,
+        'query': query
+    })
     
 def split_cart_confirmation(request):
     return render(request, 'split_cart_confirmation.html')  # สร้างหน้าเปล่าๆ ก่อนก็ได้
@@ -847,3 +914,32 @@ def confirm_cart_split(request):
             return redirect('separate_order_flow')  # เปลี่ยนชื่อ view ให้ตรงกับจริง
         else:
             return redirect('combine_order_flow')
+
+
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_protect
+from django.contrib.auth.decorators import login_required
+
+PROVINCE_DATA = {
+    "ภาคเหนือ": ["เชียงใหม่", "เชียงราย", "ลำพูน", "ลำปาง", "แพร่", "น่าน", "พะเยา", "แม่ฮ่องสอน", "อุตรดิตถ์", "ตาก"],
+    "ภาคกลาง": ["กรุงเทพมหานคร", "นนทบุรี", "ปทุมธานี", "พระนครศรีอยุธยา", "สมุทรปราการ", "สมุทรสาคร", "สมุทรสงคราม", "นครปฐม", "สุพรรณบุรี", "สระบุรี", "อ่างทอง", "ลพบุรี", "ชัยนาท", "สิงห์บุรี"],
+    "ภาคตะวันออก": ["ชลบุรี", "ระยอง", "จันทบุรี", "ตราด", "ปราจีนบุรี", "สระแก้ว", "ฉะเชิงเทรา"],
+    "ภาคตะวันตก": ["กาญจนบุรี", "ราชบุรี", "เพชรบุรี", "ประจวบคีรีขันธ์"],
+    "ภาคตะวันออกเฉียงเหนือ": ["ขอนแก่น", "อุบลราชธานี", "นครราชสีมา", "มหาสารคาม", "ร้อยเอ็ด", "ชัยภูมิ", "อุดรธานี", "สกลนคร", "นครพนม", "มุกดาหาร", "บึงกาฬ", "หนองคาย", "หนองบัวลำภู", "ยโสธร", "ศรีสะเกษ", "อำนาจเจริญ", "กาฬสินธุ์", "เลย", "สุรินทร์", "บุรีรัมย์"],
+    "ภาคใต้": ["ภูเก็ต", "สงขลา", "สุราษฎร์ธานี", "กระบี่", "ตรัง", "พังงา", "นครศรีธรรมราช", "ชุมพร", "ระนอง", "ปัตตานี", "ยะลา", "นราธิวาส", "สตูล"]
+}
+
+@login_required
+def select_province_page(request):
+    return render(request, 'myapp/select_location_by_province.html', {
+        'province_groups': PROVINCE_DATA
+    })
+
+@login_required
+@csrf_protect
+def plant_tree_in_province(request):
+    if request.method == 'POST':
+        province = request.POST.get('province')
+        # ทำอะไรบางอย่าง เช่น redirect ไปหน้าเลือกต้นไม้ หรือหน้าคอนเฟิร์มพื้นที่
+        return render(request, 'myapp/confirm_province_plant.html', {'province': province})
+    return redirect('select_province_page')

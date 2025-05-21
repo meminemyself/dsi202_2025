@@ -13,8 +13,6 @@ urlpatterns = [
     path('equipment/<int:equipment_id>/', views.equipment_detail, name='equipment_detail'),
     path('purchase/<int:equipment_id>/', views.purchase_equipment, name='purchase_equipment'),
     path('plant/<int:tree_id>/', views.plant_tree, name='plant_tree'),
-    path('select-location/<int:tree_id>/', views.select_location_for_tree, name='select_location_for_tree'),
-    path('notifications/', views.notification_list, name='notification_list'),
     path('my-trees/', views.my_trees, name='my_trees'),
     path('plant-at-location/<int:tree_id>/<int:location_id>/', views.plant_tree_at_location, name='plant_tree_at_location'),
     path('profile/', views.user_profile, name='user_profile'),
@@ -30,8 +28,7 @@ urlpatterns = [
     path('search/', views.search_results, name='search_results'),
     path('about/', views.about, name='about'),
     path('contact/', views.contact, name='contact'),
-    path('confirm-location/<int:tree_id>/<int:location_id>/', views.confirm_location, name='confirm_location'),
-    path('plant/<int:tree_id>/<int:location_id>/', views.plant_tree, name='plant_tree'),
+    path('confirm-location/<int:tree_id>/<int:location_id>/', views.confirm_location, name='confirm_location'),    path('plant/<int:tree_id>/<int:location_id>/', views.plant_tree, name='plant_tree'),
     path('payment/success/<int:tree_id>/', views.payment_success, name='payment_success'),
     path('equipment/select-address/<int:equipment_id>/', views.select_address, name='select_address'),
     path('equipment/payment/<int:equipment_id>/', views.equipment_payment, name='equipment_payment'),
@@ -69,4 +66,8 @@ urlpatterns = [
     path('cart/update/<str:item_type>/<int:item_id>/', views.update_cart, name='update_cart'),
     path('cart/remove/<str:item_type>/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
     path('process-cart/', views.process_cart_items, name='process_cart_items'),
+    path('select-location/<int:tree_id>/', views.select_location_for_tree, name='select_location_for_tree'),
+    path('select-province/', views.select_province_page, name='select_province_page'),
+    path('plant-tree-in-province/', views.plant_tree_in_province, name='plant_tree_in_province'),
     ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

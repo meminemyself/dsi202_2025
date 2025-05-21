@@ -321,9 +321,11 @@
   </div>
 
   <div class="cart-actions">
-    <button type="submit" class="plookjing-confirm-btn">
-      ยืนยันรายการ
-    </button>
+    <form method="post" action="{% url 'process_cart_items' %}">
+      {% csrf_token %}
+      <input type="hidden" name="selected_items" id="selected-items-field">
+      <button type="submit" class="plookjing-confirm-btn">ยืนยันรายการ</button>
+    </form>
   </div>
 
   {% if not cart_items_equipment and not cart_items_tree %}
@@ -369,6 +371,18 @@
       items.forEach(cb => cb.checked = groupCheckbox.checked);
       updateSelectedTotal();
     });
+  });
+
+  function getSelectedItems() {
+    const selected = [];
+    document.querySelectorAll('.item-checkbox:checked').forEach(cb => {
+      selected.push(cb.value);
+    });
+    return selected.join(',');
+  }
+
+  document.querySelector('.plookjing-confirm-btn').addEventListener('click', function () {
+    document.getElementById('selected-items-field').value = getSelectedItems();
   });
 </script>
 {% endblock %}
