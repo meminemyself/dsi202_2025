@@ -1,29 +1,12 @@
 {% extends 'base.html' %}
-{% block title %}ยืนยันการแยกออเดอร์{% endblock %}
 
 {% block content %}
-<div class="max-w-xl mx-auto mt-10 bg-white p-6 rounded-xl shadow font-prompt">
-  <h2 class="text-2xl font-bold text-green-800 mb-4">เลือกวิธีดำเนินการ</h2>
-  <p class="text-gray-700 mb-6">ระบบพบว่าคุณมีทั้งต้นไม้และอุปกรณ์ในตะกร้า คุณต้องการดำเนินการต่ออย่างไร?</p>
-
-  <div class="space-y-4">
-    <form method="post" action="{% url 'select_address_multi' %}">
-      {% csrf_token %}
-      <button type="submit" class="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition">
-        ซื้อเฉพาะอุปกรณ์
-      </button>
-    </form>
-
-    {% if tree_id %}
-        <form method="post" action="{% url 'select_location_for_tree' tree_id=tree_id %}">
-            {% csrf_token %}
-            <button type="submit" class="w-full bg-green-700 text-white py-2 rounded-lg hover:bg-green-800 transition">
-                ปลูกเฉพาะต้นไม้
-            </button>
-        </form>
-    {% else %}
-  <p class="text-red-600">ไม่พบข้อมูลต้นไม้ในตะกร้า</p>
-{% endif %}
-  </div>
+<div class="container" style="max-width: 600px; margin: 2rem auto; background: white; padding: 2rem; border-radius: 14px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); font-family: 'Prompt', sans-serif;">
+  <h2 style="color: #0D3F31; font-weight: bold;">🌱 คุณต้องการแยกคำสั่งซื้อหรือไม่?</h2>
+  <form method="post" action="{% url 'confirm_cart_split' %}" style="margin-top: 1.5rem;">
+    {% csrf_token %}
+    <button type="submit" name="choice" value="separate" style="background: #0D6E3E; color: white; padding: 0.8rem 1.6rem; border-radius: 8px; margin-right: 1rem;">แยกตามประเภทสินค้า</button>
+    <button type="submit" name="choice" value="combine" style="background: #FB7E2B; color: white; padding: 0.8rem 1.6rem; border-radius: 8px;">รวมคำสั่งซื้อเป็นรายการเดียว</button>
+  </form>
 </div>
 {% endblock %}

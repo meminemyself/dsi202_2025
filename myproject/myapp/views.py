@@ -369,7 +369,8 @@ def add_to_cart(request, item_type, item_id):
     
 def cart_view(request):
     cart = request.session.get('cart', [])
-    cart_items = []
+    cart_items_tree = []
+    cart_items_equipment = []
     cart_total = 0
 
     for item in cart:
@@ -377,46 +378,45 @@ def cart_view(request):
         item_id = item.get('id')
         quantity = item.get('qty', 1)
 
-        try:
-            if item_type == 'tree':
-                product = Tree.objects.get(id=item_id)
-            elif item_type == 'equipment':
-                product = Equipment.objects.get(id=item_id)
-            else:
-                continue  # skip unknown type
+        if item_type == 'tree':
+            product = get_object_or_404(Tree, id=item_id)
+        elif item_type == 'equipment':
+            product = get_object_or_404(Equipment, id=item_id)
+        else:
+            continue
 
-            total_price = product.price * quantity
-            cart_items.append({
-                'item': product,
-                'type': item_type,
-                'quantity': quantity,
-                'total_price': total_price,
-            })
-            cart_total += total_price
+        total_price = product.price * quantity
+        item_data = {
+            'item': product,
+            'type': item_type,
+            'quantity': quantity,
+            'total_price': total_price
+        }
 
-        except Exception as e:
-            print(f"Error loading item {item_id} of type {item_type}: {e}")
-            continue  # ข้ามถ้ามีปัญหา
+        cart_total += total_price
+        if item_type == 'tree':
+            cart_items_tree.append(item_data)
+        else:
+            cart_items_equipment.append(item_data)
 
     return render(request, 'myapp/cart.html', {
-        'cart_items': cart_items,
+        'cart_items_equipment': cart_items_equipment,
+        'cart_items_tree': cart_items_tree,
         'cart_total': cart_total
     })
+    
 
+@require_POST
 def remove_from_cart(request, item_type, item_id):
     cart = request.session.get('cart', [])
     cart = [item for item in cart if not (item['id'] == item_id and item['type'] == item_type)]
     request.session['cart'] = cart
     return redirect('cart')
 
-from django.views.decorators.http import require_POST
-
 @require_POST
 def update_cart(request, item_type, item_id):
-    action = request.POST.get('action')
     cart = request.session.get('cart', [])
-
-    item_id = str(item_id)
+    action = request.POST.get('action')
 
     for item in cart:
         if item['id'] == item_id and item['type'] == item_type:
@@ -427,9 +427,6 @@ def update_cart(request, item_type, item_id):
                 if item['qty'] <= 0:
                     cart.remove(item)
             break
-        elif action == 'decrease':
-            if item['qty'] > 1:
-                item['qty'] -= 1
 
     request.session['cart'] = cart
     return redirect('cart')
@@ -456,6 +453,11 @@ def confirm_cart(request):
             'qty': c['qty'],
             'total': item_total
         })
+
+    @require_POST
+    def process_cart_items(request):
+    # ดำเนินการต่อไปยังหน้าเลือกที่อยู่หรือยืนยัน
+        return redirect('select_address')
 
     qr_base64 = generate_qr_base64("0612348750", total)
     
@@ -833,15 +835,15 @@ def select_address_multi(request):
     return render(request, 'myapp/select_address_multi.html', {
         'cart': cart
     })
-@login_required
+
+
 def split_cart_confirmation(request):
-    cart = request.session.get('cart', [])
-    tree_id = next((item['id'] for item in cart if item['type'] == 'tree'), None)
+    return render(request, 'myapp/split_cart_confirmation.html')
 
-    if not tree_id:
-        messages.error(request, "ไม่พบสินค้าประเภทต้นไม้ในตะกร้า")
-        return redirect('cart')
-
-    return render(request, 'myapp/split_cart_confirmation.html', {
-        'tree_id': tree_id
-    })
+def confirm_cart_split(request):
+    if request.method == 'POST':
+        choice = request.POST.get('choice')
+        if choice == 'separate':
+            return redirect('separate_order_flow')  # เปลี่ยนชื่อ view ให้ตรงกับจริง
+        else:
+            return redirect('combine_order_flow')

@@ -1,56 +1,93 @@
 {% extends 'base.html' %}
-{% block title %}Your Cart | PLOOKJING{% endblock %}
+{% block title %}ตะกร้าสินค้า | PLOOKJING{% endblock %}
+{% load static %}
 
 {% block content %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-  .cart-container {
-    max-width: 1000px;
-    margin: 3rem auto;
-    padding: 2rem;
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  body {
     font-family: 'Prompt', sans-serif;
+    background-color: #F5F7F6;
+    color: #1E2E2B;
+  }
+
+  .cart-container {
+    max-width: 1060px;
+    margin: 3rem auto;
+    padding: 2.5rem;
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #E1E7E4;
   }
 
   .cart-header {
-    font-size: 2rem;
-    font-weight: bold;
-    color: var(--green-dark);
+    font-size: 1.9rem;
+    font-weight: 700;
     text-align: center;
+    color: #0D3F31;
     margin-bottom: 2rem;
   }
 
-  .cart-table {
+  table {
     width: 100%;
     border-collapse: separate;
-    border-spacing: 0 1rem;
+    border-spacing: 0 12px;
+    table-layout: fixed;
   }
 
-  .cart-table th {
-    background-color: var(--green-light);
-    color: var(--green-dark);
-    text-align: center;
+  th, td {
     padding: 1rem;
+    font-size: 0.94rem;
+    text-align: center;
+  }
+
+  th {
+    background-color: #E8F2EE;
+    color: #0D3F31;
     font-weight: 600;
-    border-radius: 12px 12px 0 0;
-    font-size: 0.95rem;
+    border-radius: 10px 10px 0 0;
   }
 
-  .cart-table td {
-    background: #f9f9f9;
-    padding: 1rem;
-    border-radius: 12px;
-    text-align: center;
-    font-size: 0.95rem;
-    vertical-align: middle;
+  .row-tree td {
+    background: #F7FBFA;
   }
 
-  .cart-table td:first-child {
+  .row-equipment td {
+    background: #F6FAF7;
+  }
+
+  .section-title {
+    padding: 1rem 1.4rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    border-radius: 10px;
+    margin: 2rem 0 1rem;
+  }
+
+  .section-title.tree {
+    background: #E1F4EF;
+    color: #1A6450;
+  }
+
+  .section-title.equipment {
+    background: #EAF6F0;
+    color: #2E5F3B;
+  }
+
+  .item-name {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
     text-align: left;
-    font-weight: 600;
+  }
+
+  .item-name img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid #D8E3DF;
   }
 
   .qty-form {
@@ -60,172 +97,278 @@
     gap: 0.5rem;
   }
 
+  .qty-box {
+    width: 42px;
+    height: 32px;
+    line-height: 32px;
+    text-align: center;
+    font-weight: 600;
+    background: #fff;
+    border: 1px solid #CCC;
+    border-radius: 8px;
+  }
+
   .qty-form button {
-    background: var(--orange);
-    border: none;
-    color: white;
-    font-weight: bold;
+    background: #fff;
+    color: #FB7E2B;
+    border: 1px solid #FB7E2B;
+    width: 32px;
+    height: 32px;
     font-size: 1.1rem;
-    width: 34px;
-    height: 34px;
+    font-weight: bold;
     border-radius: 50%;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease;
   }
 
   .qty-form button:hover {
-    background: #e76c1c;
-  }
-
-  .qty-box {
-    width: 40px;
-    height: 34px;
-    text-align: center;
-    font-weight: bold;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    line-height: 34px;
-    background: white;
-  }
-
-  .cart-total {
-    margin-top: 2rem;
-    text-align: right;
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: var(--green-dark);
-  }
-
-  .cart-actions {
-    margin-top: 2rem;
-    text-align: right;
-  }
-
-  .cart-actions button {
-    background-color: var(--green-dark);
-    color: white;
-    padding: 0.8rem 2rem;
-    border-radius: 999px;
-    border: none;
-    font-weight: bold;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-
-  .cart-actions button:hover {
-    background-color: #0b352b;
+    background: #FB7E2B;
+    color: #fff;
   }
 
   .remove-btn {
-    background: none;
-    border: none;
-    color: #cc0000;
-    font-size: 1.1rem;
-    cursor: pointer;
+    background: #FFECEC;
+    border: 1px solid #FFB3B3;
+    color: #C83E00;
+    font-size: 0.9rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    transition: all 0.2s ease;
+    font-weight: 600;
+  }
+
+  .remove-btn i {
+    margin-right: 0.4rem;
   }
 
   .remove-btn:hover {
-    color: #ff4444;
+    background: #FFB3B3;
+    color: white;
+    box-shadow: 0 2px 6px rgba(200, 62, 0, 0.2);
+  }
+
+  .cart-total {
+    text-align: right;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #0D3F31;
+    margin-top: 2.5rem;
+  }
+
+  .cart-total span {
+    color: #FB7E2B;
+  }
+
+  .cart-actions {
+    text-align: right;
+    margin-top: 1.5rem;
+  }
+
+  .cart-actions button {
+    background: #0D3F31;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 999px;
+    padding: 0.75rem 2.4rem;
+    cursor: pointer;
   }
 
   .empty-cart {
     text-align: center;
-    padding: 3rem;
+    padding: 4rem 1rem;
     color: #666;
   }
 
   .empty-cart a {
-    margin-top: 1rem;
     display: inline-block;
-    background: var(--orange);
+    background: #FB7E2B;
     color: white;
-    padding: 0.6rem 1.4rem;
+    padding: 0.6rem 1.6rem;
+    font-weight: 600;
     border-radius: 999px;
-    font-weight: bold;
     text-decoration: none;
-    transition: background-color 0.3s ease;
+    margin-top: 1rem;
   }
 
-  .empty-cart a:hover {
-    background-color: #e76c1c;
+  .confirm-btn {
+    background: linear-gradient(135deg, #DFF8EC, #F0FFF8);
+    color: #0D3F31;
+    font-size: 1.05rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 999px;
+    padding: 0.75rem 2.4rem;
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgba(13, 63, 49, 0.08);
+    transition: all 0.3s ease;
+  }
+
+  .confirm-btn:hover {
+    background: linear-gradient(135deg, #C9F0DD, #E8FFF2);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(13, 63, 49, 0.12);
   }
 </style>
+<!-- เนื้อหาด้านล่างคงเดิม แต่ปุ่มลบจะถูกอัปเดตให้ดูสวยขึ้นในตาราง -->
 
 <div class="cart-container">
-  <div class="cart-header">🛒 Your Cart</div>
-
-  {% if cart_items %}
-  <table class="cart-table">
+  <div class="cart-header">ตะกร้าของคุณ</div>
+  <div style="margin-bottom: 1rem; text-align: right;"></div>
+  {% if cart_items_equipment %}
+  <div class="section-title equipment">📦 อุปกรณ์</div>
+  <div class="section-select" style="margin-bottom: 0.5rem; text-align: left;">
+    <label>
+      <input type="checkbox" class="select-all-group" data-group="equipment" style="transform: scale(1.2); margin-right: 6px;">
+      เลือกทั้งหมดในหมวดอุปกรณ์
+    </label>
+  </div>
+  <table>
     <thead>
-      <tr>
-        <th>Item</th>
-        <th>Qty</th>
-        <th>Unit Price</th>
-        <th>Total</th>
-        <th>Remove</th>
-      </tr>
+      <tr><th>สินค้า</th><th>จำนวน</th><th>ราคา/ชิ้น</th><th>รวม</th><th></th></tr>
     </thead>
     <tbody>
-      {% for item in cart_items %}
-      <tr>
-        <td>
-          {{ item.item.name }}
-          {% if item.type == 'equipment' %}
-            <span style="color:#888;">(Equipment)</span>
-          {% else %}
-            <span style="color:#888;">(Tree)</span>
-          {% endif %}
+      {% for item in cart_items_equipment %}
+      <tr class="row-equipment">
+        <td class="item-name">
+          <input type="checkbox" class="item-checkbox" 
+                name="selected_items" 
+                value="equipment:{{ item.item.id }}" 
+                data-group="equipment" 
+                data-price="{{ item.total_price }}" 
+                style="margin-right: 12px; transform: scale(1.2);">
+          <img src="{{ item.item.image_url }}" alt="{{ item.item.name }}">
+          <div>
+            <strong>{{ item.item.name }}</strong><br>
+            <small style="color: #5D7C6F;">หมวดอุปกรณ์</small>
+          </div>
         </td>
         <td>
-          <form method="post" action="{% url 'update_cart' item.type item.item.id %}" class="qty-form">
+          <form method="post" action="{% url 'update_cart' 'equipment' item.item.id %}" class="qty-form">
             {% csrf_token %}
-          
-            {% if item.quantity == 1 %}
-              <button type="submit" name="action" value="decrease"
-                      onclick="return confirm('คุณต้องการลบสินค้าออกจากตะกร้าหรือไม่?')">−</button>
-            {% else %}
-              <button type="submit" name="action" value="decrease">−</button>
-            {% endif %}
-          
+            <button type="submit" name="action" value="decrease" {% if item.quantity == 1 %}onclick="return confirm('ลบรายการนี้?')" {% endif %}>−</button>
             <div class="qty-box">{{ item.quantity }}</div>
-          
             <button type="submit" name="action" value="increase">+</button>
           </form>
         </td>
-        <td style="text-align: right;">{{ item.item.price|floatformat:2 }} บาท</td>
-        <td style="text-align: right; color: #FB7E2B; font-weight: bold;">{{ item.total_price|floatformat:2 }} บาท</td>
+        <td>{{ item.item.price|floatformat:2 }} ฿</td>
+        <td style="color:#FB7E2B; font-weight:bold;">{{ item.total_price|floatformat:2 }} ฿</td>
         <td>
-          <form method="post" action="{% url 'remove_from_cart' item.type item.item.id %}">
+          <form method="post" action="{% url 'remove_from_cart' 'equipment' item.item.id %}">
             {% csrf_token %}
-            <button type="submit" class="remove-btn" title="ลบรายการนี้">
-              <i class="fas fa-trash-alt"></i>
-            </button>
+            <button type="submit" class="remove-btn"><i class="fas fa-times-circle"></i></button>
           </form>
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+  {% endif %}
+
+  {% if cart_items_tree %}
+  <div class="section-title tree">🌳 ต้นไม้ปลูกแทนคุณ</div>
+  <div class="section-select" style="margin-bottom: 0.5rem; text-align: left;">
+    <label>
+      <input type="checkbox" class="select-all-group" data-group="tree" style="transform: scale(1.2); margin-right: 6px;">
+      เลือกทั้งหมดในหมวดต้นไม้
+    </label>
+  </div>
+  <table>
+    <thead>
+      <tr><th>สินค้า</th><th>จำนวน</th><th>ราคา/ต้น</th><th>รวม</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for item in cart_items_tree %}
+      <tr class="row-tree">
+        <td class="item-name">
+          <input type="checkbox" class="item-checkbox" 
+                name="selected_items" 
+                value="tree:{{ item.item.id }}" 
+                data-group="tree" 
+                data-price="{{ item.total_price }}" 
+                style="margin-right: 12px; transform: scale(1.2);">
+          <img src="{{ item.item.image_url }}" alt="{{ item.item.name }}">
+          <div>
+            <strong>{{ item.item.name }}</strong><br>
+            <small style="color: #22773F;">บริการปลูกแทน</small>
+          </div>
+        </td>
+        <td>
+          <form method="post" action="{% url 'update_cart' 'tree' item.item.id %}" class="qty-form">
+            {% csrf_token %}
+            <button type="submit" name="action" value="decrease" {% if item.quantity == 1 %}onclick="return confirm('ลบรายการนี้?')" {% endif %}>−</button>
+            <div class="qty-box">{{ item.quantity }}</div>
+            <button type="submit" name="action" value="increase">+</button>
+          </form>
+        </td>
+        <td>{{ item.item.price|floatformat:2 }} ฿</td>
+        <td style="color:#FB7E2B; font-weight:bold;">{{ item.total_price|floatformat:2 }} ฿</td>
+        <td>
+          <form method="post" action="{% url 'remove_from_cart' 'tree' item.item.id %}">
+            {% csrf_token %}
+            <button type="submit" class="remove-btn"><i class="fas fa-times-circle"></i></button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
 
   <div class="cart-total">
-    Total: <span class="text-orange-600">{{ cart_total|floatformat:2 }} บาท</span>
+    รวมทั้งหมด <span id="selected-total">0.00</span> ฿
   </div>
 
   <div class="cart-actions">
-    <form method="post" action="{% url 'process_cart_items' %}">
-      {% csrf_token %}
-      <button type="submit" class="btn-full-green">
-        🌱 ยืนยันคำสั่งซื้อ
-      </button>
-    </form>
+    <button type="submit" class="plookjing-confirm-btn">
+      ยืนยันรายการ
+    </button>
   </div>
 
-  {% else %}
+  {% if not cart_items_equipment and not cart_items_tree %}
   <div class="empty-cart">
-    <p>Your cart is currently empty 😢</p>
-    <a href="{% url 'tree_list' %}">🌱 Explore Trees</a>
+    <p>ยังไม่มีสินค้าในตะกร้าของคุณ</p>
+    <a href="{% url 'tree_list' %}">🌱 เริ่มเลือกต้นไม้หรืออุปกรณ์</a>
   </div>
   {% endif %}
 </div>
+
+<script>
+  document.querySelectorAll('.select-all-group').forEach(groupCheckbox => {
+    groupCheckbox.addEventListener('change', () => {
+      const group = groupCheckbox.getAttribute('data-group');
+      const items = document.querySelectorAll(`.item-checkbox[data-group="${group}"]`);
+      items.forEach(cb => cb.checked = groupCheckbox.checked);
+    });
+  });
+
+  function toggleAll(source) {
+    const checkboxes = document.querySelectorAll('.item-checkbox');
+    checkboxes.forEach(cb => cb.checked = source.checked);
+  }
+
+  function updateSelectedTotal() {
+    let total = 0;
+    document.querySelectorAll('.item-checkbox:checked').forEach(cb => {
+      total += parseFloat(cb.getAttribute('data-price')) || 0;
+    });
+    document.getElementById('selected-total').innerText = total.toFixed(2);
+  }
+
+  // เรียกใช้เมื่อ checkbox เปลี่ยนค่า
+  document.querySelectorAll('.item-checkbox').forEach(cb => {
+    cb.addEventListener('change', updateSelectedTotal);
+  });
+
+  // เรียกใช้เมื่อกดปุ่ม "เลือกทั้งหมด"
+  document.querySelectorAll('.select-all-group').forEach(groupCheckbox => {
+    groupCheckbox.addEventListener('change', () => {
+      const group = groupCheckbox.getAttribute('data-group');
+      const items = document.querySelectorAll(`.item-checkbox[data-group="${group}"]`);
+      items.forEach(cb => cb.checked = groupCheckbox.checked);
+      updateSelectedTotal();
+    });
+  });
+</script>
 {% endblock %}
