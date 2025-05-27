@@ -1,9 +1,146 @@
 {% extends 'base.html' %}
-{% block title %}Planting Confirmed | PLOOKJING{% endblock %}
+{% block title %}ยืนยันคำสั่งซื้อและชำระเงิน | PLOOKJING{% endblock %}
+{% load static %}
+
 {% block content %}
-<div class="text-center py-16">
-  <h1 class="text-4xl font-bold text-green-700 mb-4"> You planted {{ tree.name }} successfully!</h1>
-  <p class="text-lg text-gray-700 mb-6">at {{ location.name }}</p>
-  <a href="{% url 'home' %}" class="bg-orange-500 text-white px-6 py-3 rounded-lg shadow hover:bg-orange-600">Go to Homepage</a>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  body { font-family: 'Prompt', sans-serif; background-color: #F0F4F8; }
+  .payment-container {
+    max-width: 880px;
+    margin: 3rem auto;
+    padding: 2.5rem;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  }
+  .payment-header {
+    font-size: 1.9rem;
+    font-weight: bold;
+    text-align: center;
+    color: #0D3F31;
+    margin-bottom: 2rem;
+  }
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #FB7E2B;
+    margin-top: 2rem;
+    border-bottom: 2px solid #FB7E2B;
+    padding-bottom: 0.4rem;
+  }
+  .order-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 0;
+    border-bottom: 1px solid #eee;
+    align-items: center;
+  }
+  .order-item img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-right: 1rem;
+  }
+  .item-details {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .item-name { font-weight: 600; color: #0D3F31; }
+  .item-qty { color: #555; font-size: 0.95rem; }
+  .item-price { font-weight: bold; color: #FB7E2B; min-width: 100px; text-align: right; }
+  .total-section {
+    margin-top: 2rem;
+    font-size: 1.2rem;
+    text-align: right;
+    color: #0D3F31;
+  }
+  .total-section span {
+    font-weight: bold;
+    color: #FB7E2B;
+    font-size: 1.4rem;
+  }
+  .qr-section {
+    margin-top: 3rem;
+    text-align: center;
+  }
+  .qr-section img {
+    width: 200px;
+    height: 200px;
+    margin-bottom: 1rem;
+  }
+  .note {
+    font-size: 0.9rem;
+    color: #777;
+    margin-top: 0.5rem;
+  }
+  .customer-info {
+    margin-top: 3rem;
+    background: #FAFDFC;
+    padding: 1.5rem;
+    border-radius: 14px;
+    border: 1px solid #D8E9E1;
+    font-size: 0.95rem;
+    color: #333;
+  }
+  .customer-info h4 {
+    color: #0D3F31;
+    margin-bottom: 0.8rem;
+  }
+</style>
+
+<div class="payment-container">
+  <div class="payment-header">ยืนยันคำสั่งซื้อและชำระเงิน</div>
+
+  {% if items %}
+    {% for group in items|dictsort:"type" %}
+      {% if forloop.first or group.type != items|index:forloop.counter0|default:''|attr:"type" %}
+        <div class="section-title">
+          {% if group.type == "tree" %}🌱 ต้นไม้ปลูกไกล
+          {% elif group.type == "equipment" %}🛠️ อุปกรณ์เสริม
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <div class="order-item">
+        <div class="item-details">
+          <img src="{{ group.image_url }}" alt="{{ group.name }}">
+          <div>
+            <div class="item-name">{{ group.name }}</div>
+            <div class="item-qty">จำนวน: {{ group.qty }}</div>
+          </div>
+        </div>
+        <div class="item-price">{{ group.total|floatformat:2 }} ฿</div>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="total-section">
+    ยอดรวมทั้งสิ้น: <span>{{ total|floatformat:2 }} ฿</span>
+  </div>
+
+  <div class="qr-section">
+    <h4>โปรดสแกน QR ด้านล่างเพื่อชำระเงิน</h4>
+    <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR Code">
+    <div class="note">หมายเหตุ: หลังชำระเงิน กรุณาแนบสลิปในหน้าประวัติคำสั่งซื้อ</div>
+  </div>
+
+  <div class="customer-info">
+    <h4>ข้อมูลผู้รับสินค้า</h4>
+    <p><strong>ชื่อ:</strong> {{ name }}</p>
+    <p><strong>เบอร์โทร:</strong> {{ tel }}</p>
+    <p><strong>ที่อยู่:</strong> {{ full_address }}</p>
+
+    {% if tree_location %}
+      <hr style="margin: 1.2rem 0;">
+      <h4>📍 สถานที่ปลูกต้นไม้</h4>
+      <p><strong>{{ tree_location.name }}</strong></p>
+      <p>{{ tree_location.description }}</p>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}

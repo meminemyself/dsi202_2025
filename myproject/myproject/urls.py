@@ -18,8 +18,11 @@ from django.contrib import admin
 from django.urls import path, include   # 👉 ต้อง import include ด้วย
 from django.conf import settings
 from django.conf.urls.static import static
+from django.shortcuts import redirect  # ✅ เพิ่มบรรทัดนี้
+from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),          # เส้นทาง admin
-    path('', include('myapp.urls')),           # เส้นทางไปยัง myapp.urls
+    path('', include('myapp.urls')),
+    path('accounts/login/', lambda request: redirect('/login/')),  # redirect allauth กลับ login.html ของเรา  
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

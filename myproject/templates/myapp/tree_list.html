@@ -1,31 +1,25 @@
 {% extends 'base.html' %}
-{% block title %}Explore Trees | PLOOKJING{% endblock %}
+{% load static %}
+{% block title %}ต้นไม้ | PLOOKJING{% endblock %}
 
 {% block content %}
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
-
 <style>
   body {
+    background-color: #F3F6F9;
     font-family: 'Prompt', sans-serif;
-    background-color: #EFFAF3;
-  }
-
-  a,
-  a:hover,
-  .tree-card a,
-  .sidebar a,
-  .recommended-item a {
-    text-decoration: none !important;
   }
 
   .page-layout {
     display: flex;
     gap: 2rem;
     padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
   }
 
   .sidebar {
-    width: 280px;
+    width: 260px;
     background: white;
     border-radius: 16px;
     box-shadow: 0 6px 12px rgba(0,0,0,0.06);
@@ -37,25 +31,20 @@
   }
 
   .sidebar h2 {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     color: #0D3F31;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.2rem;
     border-bottom: 2px solid #0D3F31;
     padding-bottom: 0.5rem;
   }
 
   .recommended-item {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.2rem;
     background: #fff7f0;
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid #FB7E2B;
     box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    transition: box-shadow 0.3s ease;
-  }
-
-  .recommended-item:hover {
-    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
   }
 
   .recommended-item img {
@@ -66,21 +55,36 @@
 
   .recommended-item h3 {
     font-size: 1rem;
-    margin: 0.8rem;
     color: #0D3F31;
+    margin: 0.8rem;
     text-align: center;
   }
 
   .tree-section {
     flex: 1;
-    display: flex;
-    flex-direction: column;
   }
 
   .filters {
     display: flex;
-    justify-content: flex-end;
-    margin-bottom: 1.5rem;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border-left: 5px solid #FB7E2B;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .filters input[type="text"], .filters select {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border-radius: 12px;
+    border: 1px solid #ccc;
+    background: white;
+    color: #0D3F31;
   }
 
   .filters form {
@@ -88,41 +92,17 @@
     flex-wrap: wrap;
     gap: 1rem;
     align-items: center;
-    background: white;
-    padding: 1rem 1.5rem;
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    border-left: 5px solid #FB7E2B;
-  }
-
-  .filters input[type="text"] {
-    flex: 2;
-    min-width: 200px;
-    padding: 0.6rem 1rem;
-    font-size: 1rem;
-    border-radius: 12px;
-    border: 1px solid #ccc;
-    background: #F9FCFB;
-  }
-
-  .filters select {
-    padding: 0.6rem 1rem;
-    font-size: 1rem;
-    border-radius: 12px;
-    border: 1px solid #ccc;
-    background: white;
-    color: #0D3F31;
+    width: 100%;
   }
 
   .filters button {
     background-color: #FB7E2B;
     color: white;
     border: none;
-    padding: 0.6rem 1.6rem;
-    border-radius: 12px;
-    font-size: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
     cursor: pointer;
-    transition: background-color 0.3s ease;
   }
 
   .filters button:hover {
@@ -131,104 +111,77 @@
 
   .tree-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
   }
 
   .tree-card {
     background: #fff;
     border-radius: 16px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
     overflow: hidden;
-    color: inherit;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease;
     display: flex;
     flex-direction: column;
-    transition: box-shadow 0.2s ease;
-    border: 1px solid #ddd;
+    justify-content: space-between;
+    min-height: 270px;
   }
 
   .tree-card:hover {
-    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+    transform: translateY(-4px);
   }
 
   .tree-card img {
     width: 100%;
-    height: 200px;
+    height: 170px;
     object-fit: cover;
   }
 
   .tree-info {
-    padding: 1rem;
+    padding: 0.8rem 1rem;
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    justify-content: space-between;
+    align-items: flex-end;
+    min-height: 85px;
   }
 
-  .tree-info h3 {
-    font-size: 1.05rem;
+  .tree-name {
+    text-align: left;
+  }
+
+  .tree-name h3 {
+    font-size: 1rem;
     color: #0D3F31;
-    font-weight: 600;
     margin: 0;
   }
 
-  .tree-info .price {
+  .tree-name .price {
     color: #FB7E2B;
-    font-weight: bold;
-    font-size: 0.95rem;
+    font-weight: 600;
+    font-size: 0.9rem;
   }
 
-  .tree-info .desc {
-    font-size: 0.85rem;
-    color: #555;
-    line-height: 1.4;
-    height: 2.5em;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .add-cart-btn {
+    background: #FB7E2B;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 50%;
+    color: white;
+    font-size: 0.9rem;
+    cursor: pointer;
   }
 
-  .tree-info .tag {
-    background: #FFF2E5;
-    color: #D55E02;
-    font-size: 0.75rem;
-    padding: 0.2rem 0.5rem;
-    border-radius: 8px;
-    width: fit-content;
-  }
-
-  @media (max-width: 768px) {
-    .page-layout {
-      flex-direction: column;
-      padding: 1rem;
-    }
-    .sidebar {
-      width: 100%;
-      position: static;
-    }
-    .filters {
-      justify-content: center;
-    }
+  .add-cart-btn:hover {
+    background: #d7651e;
   }
 </style>
 
-<div class="filters" style="margin-top: 1rem;">
-  <form method="get">
-    <input type="text" name="q" placeholder="ค้นหาต้นไม้..." value="{{ request.GET.q }}">
-    <label for="sort" style="font-weight: 600; color: #0D3F31;">เรียงตาม:</label>
-    <select name="sort" id="sort" onchange="this.form.submit()">
-      <option value="name" {% if selected_sort == 'name' %}selected{% endif %}>ชื่อ</option>
-      <option value="price" {% if selected_sort == 'price' %}selected{% endif %}>ราคาต่ำไปสูง</option>
-      <option value="-price" {% if selected_sort == '-price' %}selected{% endif %}>ราคาสูงไปต่ำ</option>
-    </select>
-    <button type="submit"><i class="fas fa-search"></i></button>
-  </form>
-</div>
-
 <div class="page-layout">
   <aside class="sidebar">
-    <h2>Recommended</h2>
+    <h2>แนะนำ</h2>
     {% for tree in recommended_trees %}
       <div class="recommended-item">
-        <a href="{% url 'tree_detail' tree.id %}">
+        <a href="{% url 'tree_detail' tree.id %}" style="text-decoration: none;">
           <img src="{{ tree.image_url }}" alt="{{ tree.name }}">
           <h3>{{ tree.name }}</h3>
         </a>
@@ -237,32 +190,41 @@
   </aside>
 
   <section class="tree-section">
+    <div class="filters">
+      <form method="get">
+        <input type="text" name="q" placeholder="ค้นหาต้นไม้..." value="{{ request.GET.q }}">
+        <label for="sort">เรียงตาม</label>
+        <select name="sort" id="sort" onchange="this.form.submit()">
+          <option value="name" {% if selected_sort == 'name' %}selected{% endif %}>ชื่อ</option>
+          <option value="price" {% if selected_sort == 'price' %}selected{% endif %}>ราคาต่ำ - สูง</option>
+          <option value="-price" {% if selected_sort == '-price' %}selected{% endif %}>ราคาสูง - ต่ำ</option>
+        </select>
+        <button type="submit">ค้นหา</button>
+      </form>
+    </div>
+
     <div class="tree-grid">
-      {% if trees %}
-        {% for tree in trees %}
-          <a href="{% url 'tree_detail' tree.id %}" class="tree-card">
-            {% if tree.image_url %}
-              <img src="{{ tree.image_url }}" alt="{{ tree.name }}">
-            {% else %}
-              <div class="w-full h-[200px] bg-gray-200 flex items-center justify-center text-gray-500">
-                ไม่มีรูปภาพ
-              </div>
-            {% endif %}
-            <div class="tree-info">
+      {% for tree in trees %}
+        <div class="tree-card">
+          <a href="{% url 'tree_detail' tree.id %}" style="text-decoration: none;">
+            <img src="{{ tree.image_url }}" alt="{{ tree.name }}">
+          </a>
+          <div class="tree-info">
+            <div class="tree-name">
               <h3>{{ tree.name }}</h3>
               <div class="price">{{ tree.price }} บาท</div>
-              <div class="desc">{{ tree.description|truncatechars:60 }}</div>
-              {% if tree.category %}
-                <div class="tag">{{ tree.category }}</div>
-              {% endif %}
             </div>
-          </a>
-        {% endfor %}
-      {% else %}
-        <p class="no-results" style="grid-column: 1 / -1; text-align: center; font-style: italic; color: #888;">
-          ไม่พบต้นไม้ที่ตรงกับคำค้นหา
-        </p>
-      {% endif %}
+            {% if user.is_authenticated %}
+              <form action="{% url 'add_to_cart' 'tree' tree.id %}" method="post">
+                {% csrf_token %}
+                <button class="add-cart-btn" title="เพิ่มลงตะกร้า">
+                  <i class="fas fa-shopping-cart"></i>
+                </button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
     </div>
   </section>
 </div>

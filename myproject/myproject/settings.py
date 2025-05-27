@@ -36,7 +36,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'myapp'
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'django.contrib.humanize',
+    'myapp.apps.MyappConfig',
 ]
 
 MIDDLEWARE = [
@@ -47,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'myproject.urls'
@@ -124,9 +131,22 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/login/'         # URL ที่ใช้ redirect ไปยังหน้า login
 LOGIN_REDIRECT_URL = '/'      # URL หลังจาก login สำเร็จ
-LOGOUT_REDIRECT_URL = '/login/'  # URL หลังจาก logout
+LOGOUT_REDIRECT_URL = '/' 
 AXES_LOCKOUT_URL = '/lockout/'
 AXES_LOCKOUT_URL = '/login/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+SITE_ID = 1
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+
+SOCIALACCOUNT_AUTO_SIGNUP = True  # ✅ สมัครอัตโนมัติถ้าใช้ Google
+SOCIALACCOUNT_LOGIN_ON_GET = True  # ✅ ไม่ต้องแสดงหน้ายืนยัน แค่คลิกก็ไปเลยห
 

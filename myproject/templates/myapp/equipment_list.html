@@ -1,32 +1,26 @@
 {% extends 'base.html' %}
-{% block title %}Equipment Shop | PLOOKJING{% endblock %}
+{% load static %}
+{% block title %}อุปกรณ์ | PLOOKJING{% endblock %}
 
 {% block content %}
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
-
 <style>
   body {
+    background-color: #F3F6F9;
     font-family: 'Prompt', sans-serif;
-    background-color: #EFFAF3;
-  }
-
-  a,
-  a:hover,
-  .card a,
-  .sidebar a,
-  .recommended-item a {
-    text-decoration: none !important;
   }
 
   .page-layout {
     display: flex;
     gap: 2rem;
     padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
   }
 
   .sidebar {
-    width: 280px;
-    background: #ffffff;
+    width: 260px;
+    background: white;
     border-radius: 16px;
     box-shadow: 0 6px 12px rgba(0,0,0,0.06);
     padding: 2rem 1.5rem;
@@ -37,25 +31,20 @@
   }
 
   .sidebar h2 {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     color: #0D3F31;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.2rem;
     border-bottom: 2px solid #0D3F31;
     padding-bottom: 0.5rem;
   }
 
   .recommended-item {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.2rem;
     background: #fff7f0;
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid #FB7E2B;
     box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    transition: box-shadow 0.3s ease;
-  }
-
-  .recommended-item:hover {
-    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
   }
 
   .recommended-item img {
@@ -66,21 +55,27 @@
 
   .recommended-item h3 {
     font-size: 1rem;
-    margin: 0.8rem;
     color: #0D3F31;
+    margin: 0.8rem;
     text-align: center;
   }
 
-  .main-section {
+  .equipment-section {
     flex: 1;
-    display: flex;
-    flex-direction: column;
   }
 
   .filters {
     display: flex;
-    justify-content: flex-end;
-    margin-bottom: 1.5rem;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border-left: 5px solid #FB7E2B;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
   }
 
   .filters form {
@@ -88,154 +83,148 @@
     flex-wrap: wrap;
     gap: 1rem;
     align-items: center;
-    background: white;
-    padding: 1rem 1.5rem;
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    border-left: 5px solid #FB7E2B;
+    width: 100%;
   }
 
-  .filters input,
-  .filters select {
-    padding: 0.6rem 1rem;
+  .filters input[type="text"], .filters select {
+    padding: 0.5rem 1rem;
     font-size: 1rem;
     border-radius: 12px;
     border: 1px solid #ccc;
-    background: #F9FCFB;
+    background: white;
+    color: #0D3F31;
   }
 
   .filters button {
     background-color: #FB7E2B;
     color: white;
     border: none;
-    padding: 0.6rem 1.6rem;
-    border-radius: 12px;
-    font-size: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
     cursor: pointer;
-    transition: background-color 0.3s ease;
   }
 
   .filters button:hover {
     background-color: #0D3F31;
   }
 
-  .grid {
+  .equipment-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
   }
 
-  .card {
+  .equipment-card {
     background: #fff;
     border-radius: 16px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
     overflow: hidden;
-    text-decoration: none;
-    color: inherit;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease;
     display: flex;
     flex-direction: column;
-    transition: box-shadow 0.2s ease;
-    border: 1px solid #ddd;
+    justify-content: space-between;
   }
 
-  .card:hover {
-    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+  .equipment-card:hover {
+    transform: translateY(-4px);
   }
 
-  .card img {
+  .equipment-card img {
     width: 100%;
-    height: 200px;
+    height: 170px;
     object-fit: cover;
   }
 
-  .info {
-    padding: 1rem;
+  .equipment-info {
+    padding: 0.8rem 1rem;
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    justify-content: space-between;
+    align-items: flex-end;
+    min-height: 80px;
   }
 
-  .info h3 {
-    font-size: 1.05rem;
+  .equipment-name {
+    text-align: left;
+  }
+
+  .equipment-name h3 {
+    font-size: 1rem;
     color: #0D3F31;
-    font-weight: 600;
     margin: 0;
   }
 
-  .info .price {
-    color: #D55E02;
-    font-weight: bold;
-    font-size: 0.95rem;
+  .equipment-name .price {
+    color: #FB7E2B;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
   }
 
-  .info .desc {
-    font-size: 0.85rem;
-    color: #555;
-    height: 2.6em;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.3;
+  .add-cart-btn {
+    background: #FB7E2B;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 50%;
+    color: white;
+    font-size: 0.9rem;
+    cursor: pointer;
   }
 
-  @media (max-width: 768px) {
-    .page-layout {
-      flex-direction: column;
-      padding: 1rem;
-    }
-    .sidebar {
-      width: 100%;
-      position: static;
-    }
-    .filters {
-      justify-content: center;
-    }
+  .add-cart-btn:hover {
+    background: #d7651e;
   }
 </style>
 
-<div class="filters">
-  <form method="get">
-    <input type="text" name="q" placeholder="Search equipments..." value="{{ request.GET.q }}">
-    <label for="sort" style="font-weight: 600; color: #0D3F31;">Sort by:</label>
-    <select name="sort" id="sort" onchange="this.form.submit()">
-      <option value="name" {% if selected_sort == 'name' %}selected{% endif %}>Name</option>
-      <option value="price" {% if selected_sort == 'price' %}selected{% endif %}>Price Low to High</option>
-      <option value="-price" {% if selected_sort == '-price' %}selected{% endif %}>Price High to Low</option>
-    </select>
-    <button type="submit">
-      <i class="fas fa-search"></i>
-    </button>
-  </form>
-</div>
-
 <div class="page-layout">
   <aside class="sidebar">
-    <h2>Recommended</h2>
-    {% for item in equipments %}
-      <a href="{% url 'equipment_detail' item.id %}">
-        <div class="recommended-item">
+    <h2>แนะนำ</h2>
+    {% for item in recommended_equipments %}
+      <div class="recommended-item">
+        <a href="{% url 'equipment_detail' item.id %}" style="text-decoration: none;">
           <img src="{{ item.image_url }}" alt="{{ item.name }}">
           <h3>{{ item.name }}</h3>
-        </div>
-      </a>
-    {% empty %}
-      <p class="text-center text-gray-400">No recommended equipments right now</p>
+        </a>
+      </div>
     {% endfor %}
   </aside>
 
-  <section class="main-section">
-    <div class="grid">
-    {% for item in equipment_list %}
-      <a href="{% url 'equipment_detail' item.id %}" class="card">
-        <img src="{{ item.image_url }}" alt="{{ item.name }}">
-        <div class="info">
-          <h3>{{ item.name }}</h3>
-          <div class="price">{{ item.price }} บาท</div>
-          <div class="desc">{{ item.description|truncatechars:70 }}</div>
+  <section class="equipment-section">
+    <div class="filters">
+      <form method="get">
+        <input type="text" name="q" placeholder="ค้นหาอุปกรณ์..." value="{{ request.GET.q }}">
+        <label for="sort">เรียงตาม</label>
+        <select name="sort" id="sort" onchange="this.form.submit()">
+          <option value="name" {% if selected_sort == 'name' %}selected{% endif %}>ชื่อ</option>
+          <option value="price" {% if selected_sort == 'price' %}selected{% endif %}>ราคาต่ำ - สูง</option>
+          <option value="-price" {% if selected_sort == '-price' %}selected{% endif %}>ราคาสูง - ต่ำ</option>
+        </select>
+        <button type="submit">ค้นหา</button>
+      </form>
+    </div>
+
+    <div class="equipment-grid">
+      {% for item in equipment_list %}
+        <div class="equipment-card">
+          <a href="{% url 'equipment_detail' item.id %}" style="text-decoration: none;">
+            <img src="{{ item.image_url }}" alt="{{ item.name }}">
+          </a>
+          <div class="equipment-info">
+            <div class="equipment-name">
+              <h3>{{ item.name }}</h3>
+              <div class="price">{{ item.price }} บาท</div>
+            </div>
+            {% if user.is_authenticated %}
+              <form action="{% url 'add_to_cart' 'equipment' item.id %}" method="post">
+                {% csrf_token %}
+                <button class="add-cart-btn" title="เพิ่มลงตะกร้า">
+                  <i class="fas fa-shopping-cart"></i>
+                </button>
+              </form>
+            {% endif %}
+          </div>
         </div>
-      </a>
-    {% empty %}
-      <p class="text-center text-gray-400">No equipment available.</p>
-    {% endfor %}
+      {% endfor %}
     </div>
   </section>
 </div>

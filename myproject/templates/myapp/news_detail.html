@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}{{ article.title }} | PLOOKJING{% endblock %}
+{% load static %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Prompt', sans-serif; background-color: #F3F6F9; }
+  .news-container {
+    max-width: 800px;
+    margin: 3rem auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+  }
+
+  .news-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #0D3F31;
+    margin-bottom: 1rem;
+  }
+
+  .news-meta {
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .news-image {
+    width: 100%;
+    height: auto;
+    max-height: 400px;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  .news-body {
+    font-size: 1rem;
+    color: #333;
+    line-height: 1.7;
+  }
+
+  .news-credit {
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    color: #555;
+  }
+
+  .news-credit a {
+    color: #FB7E2B;
+    text-decoration: none;
+  }
+
+  .news-credit a:hover {
+    text-decoration: underline;
+  }
+</style>
+
+<div class="news-container">
+  <h1 class="news-title">{{ article.title }}</h1>
+  <p class="news-meta">เผยแพร่เมื่อ {{ article.created_at|date:"d M Y เวลา H:i" }}</p>
+
+  {% if article.image %}
+    <img src="{{ article.image.url }}" alt="{{ article.title }}" class="news-image">
+  {% endif %}
+
+  <div class="news-body">
+    {{ article.description|linebreaks }}
+  </div>
+
+  {% if article.article_url %}
+    <div class="news-credit">
+      ที่มา: <a href="{{ article.article_url }}" target="_blank" rel="noopener noreferrer">{{ article.article_url }}</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,69 +1,105 @@
 {% extends 'base.html' %}
-{% block title %}News | PLOOKJING{% endblock %}
+{% block title %}ข่าวสาร | PLOOKJING{% endblock %}
+{% load static %}
+
 {% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
 <style>
+  body {
+    font-family: 'Prompt', sans-serif;
+    background-color: #F3F6F9;
+  }
+
   .news-section {
     max-width: 1200px;
-    margin: 2rem auto;
-    padding: 1rem;
+    margin: auto;
+    padding: 2rem;
+  }
+
+  .news-header {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #0D3F31;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .news-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 2rem;
   }
 
   .news-card {
+    display: block;
     background: white;
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.3s ease;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.06);
+    transition: all 0.3s ease-in-out;
+    text-decoration: none;
   }
 
   .news-card:hover {
     transform: translateY(-5px);
+    box-shadow: 0 12px 20px rgba(0,0,0,0.08);
   }
 
-  .news-card img {
+  .news-thumbnail {
     width: 100%;
-    height: 180px;
+    height: 200px;
     object-fit: cover;
+    display: block;
   }
 
   .news-content {
-    padding: 1rem;
+    padding: 1.2rem;
   }
 
   .news-title {
-    font-size: 1.3rem;
-    font-weight: bold;
-    color: #0D3F31;
-    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #FB7E2B;
+    margin-bottom: 0.6rem;
   }
 
-  .news-link {
-    display: inline-block;
-    margin-top: 1rem;
-    color: #D55E02;
-    font-weight: bold;
-    text-decoration: none;
+  .news-summary {
+    font-size: 0.95rem;
+    color: #444;
+    line-height: 1.5;
   }
-  .news-link:hover {
-    text-decoration: underline;
-    color: #FB7E2B;
+
+  .news-meta {
+    font-size: 0.85rem;
+    color: #888;
+    margin-top: 1rem;
+  }
+
+  .news-card:hover .news-title {
+    text-decoration: none;
   }
 </style>
 
-<section class="news-section">
-  {% for article in news %}
-  <div class="news-card">
-    <img src="{{ article.image_url }}" alt="{{ article.title }}">
-    <div class="news-content">
-      <div class="news-title">{{ article.title }}</div>
-      <a href="{{ article.link }}" target="_blank" class="news-link">อ่านต่อ ➔</a>
-    </div>
+<div class="news-section">
+  <div class="news-header">ข่าวสารสิ่งแวดล้อม & ต้นไม้</div>
+
+  <div class="news-grid">
+    {% for article in news %}
+      <a href="{% url 'news_detail' article.id %}" class="news-card">
+        {% if article.image %}
+          <img src="{{ article.image.url }}" class="news-thumbnail" alt="{{ article.title }}">
+        {% else %}
+          <img src="{% static 'images/default_news.jpg' %}" class="news-thumbnail" alt="Default">
+        {% endif %}
+        <div class="news-content">
+          <div class="news-title">{{ article.title }}</div>
+          <div class="news-summary">{{ article.summary|truncatewords:25 }}</div>
+          <div class="news-meta">เผยแพร่เมื่อ {{ article.created_at|date:"d M Y เวลา H:i" }}</div>
+        </div>
+      </a>
+    {% empty %}
+      <p style="text-align:center; color:#777;">ไม่มีข่าวให้แสดงในขณะนี้</p>
+    {% endfor %}
   </div>
-  {% endfor %}
-</section>
+</div>
 {% endblock %}

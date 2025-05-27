@@ -1,20 +1,26 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.utils import timezone
-from .models import Tree, Equipment, PlantingLocation, UserPlanting, Notification, NewsArticle , Purchase
-from django.db.models import Q
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import login
-from django.contrib import messages
-from io import BytesIO
-from myapp.utils.promptpay import generate_qr_base64
-import qrcode
-import base64
-from django.views.decorators.http import require_POST
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from datetime import timedelta
+from io import BytesIO
+import base64
+import qrcode
 
+from django.contrib import messages
+from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.db.models import Q, Count
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.http import JsonResponse, Http404
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.views.decorators.http import require_POST
+
+from .models import (
+    Tree, Equipment, PlantingLocation, UserPlanting, Notification,
+    NewsArticle, Purchase, PurchaseItem, TreePaymentSlip
+)
+from .utils.promptpay import generate_promptpay_payload
 def generate_qr_base64(phone_number: str, amount: float, order_id=None) -> str:
     message = f"โอนเงิน {amount:.2f} บาท ไปยัง {phone_number}"
     if order_id:
@@ -62,7 +68,7 @@ def equipment_list(request):
     equipments = Equipment.objects.all()
     context = {
         'equipment_list': equipments,
-        'equipments': equipments[:3],  # แนะนำไว้ sidebar
+        'equipments': equipments[:3],  
     }
     return render(request, 'myapp/equipment_list.html', context)
 
@@ -75,7 +81,7 @@ def equipment_detail(request, equipment_id):
 @login_required
 def purchase_equipment(request, equipment_id):
     equipment = get_object_or_404(Equipment, id=equipment_id)
-    quantity = int(request.GET.get('qty', 1))  # รับค่าจำนวนจาก URL
+    quantity = int(request.GET.get('qty', 1))  
 
     Purchase.objects.create(
         user=request.user,
@@ -85,18 +91,19 @@ def purchase_equipment(request, equipment_id):
 
     return redirect('my_trees')
 
+# views.py
+from django.contrib.auth.decorators import login_required
+from .models import Notification
+
 @login_required
 def notification_list(request):
     notifications = Notification.objects.filter(user=request.user).order_by('-notification_date')
     return render(request, 'myapp/notification_list.html', {'notifications': notifications})
-
-
 @login_required
 def plant_tree(request, tree_id, location_id):
     tree = get_object_or_404(Tree, pk=tree_id)
     location = get_object_or_404(PlantingLocation, pk=location_id)
 
-    # เช็คว่าปลูกไปแล้วหรือยัง
     existing = UserPlanting.objects.filter(user=request.user, tree=tree, location=location)
     if not existing.exists():
         UserPlanting.objects.create(user=request.user, tree=tree, location=location)
@@ -106,23 +113,44 @@ def plant_tree(request, tree_id, location_id):
 
 @login_required
 def plant_tree_at_location(request, tree_id, location_id):
-    tree = Tree.objects.get(id=tree_id)
-    location = PlantingLocation.objects.get(id=location_id)
+    request.session['tree_location'] = location_id
+    return redirect('payment_multi')
 
-    UserPlanting.objects.create(
-        user=request.user,
-        tree=tree,
-        location=location,
-        is_completed=True
-    )
-
-    return redirect('payment', tree_id=tree.id)
+@login_required
+def proceed_to_payment_multi(request):
+    return redirect('payment_multi') 
 
 @login_required
 def my_trees(request):
-    trees = UserPlanting.objects.filter(user=request.user).select_related('tree', 'location')
-    return render(request, 'myapp/my_trees.html', {'trees': trees})
+    status = request.GET.get('status', 'all')
+    all_trees = UserPlanting.objects.filter(user=request.user).select_related('tree', 'location')
 
+
+    completed_count = all_trees.filter(status='completed').count()
+    in_progress_count = all_trees.filter(status='in_progress').count()
+    verifying_count = all_trees.filter(status='verifying').count()
+    all_count = all_trees.count()
+
+
+    if status == 'completed':
+        trees = all_trees.filter(status='completed')
+    elif status == 'in_progress':
+        trees = all_trees.filter(status='in_progress')
+    elif status == 'verifying':
+        trees = all_trees.filter(status='verifying')
+    else:
+        trees = all_trees
+
+    return render(request, 'myapp/my_trees.html', {
+        'trees': trees,
+        'selected_status': status,
+        'status_counts': {
+            'all': all_count,
+            'completed': completed_count,
+            'in_progress': in_progress_count,
+            'verifying': verifying_count,
+        }
+    })
 @login_required
 def user_profile(request):
     return render(request, 'myapp/user_profile.html', {'user': request.user})
@@ -141,9 +169,9 @@ def edit_profile(request):
 
 
 def news_list(request):
-    news = NewsArticle.objects.all().order_by('-published_date')  # เรียงข่าวใหม่สุดก่อน
+    news = NewsArticle.objects.all().order_by('-created_at')
     return render(request, 'myapp/news_list.html', {'news': news})
-
+    
 def search_results(request):
     query = request.GET.get('q')
     trees = Tree.objects.filter(Q(name__icontains=query) | Q(description__icontains=query))
@@ -198,7 +226,7 @@ def plant_tree(request, tree_id, location_id):
 
 def home(request):
     news_list = NewsArticle.objects.all().order_by('-created_at')[:5]
-    featured_tree = Tree.objects.order_by('?').first()  # สุ่มต้นไม้ 1 ต้น
+    featured_tree = Tree.objects.order_by('?').first() 
     return render(request, 'myapp/home.html', {
         'news_list': news_list,
         'featured_tree': featured_tree
@@ -224,9 +252,39 @@ def select_location_for_tree(request, tree_id):
         'locations': locations
     })
 
+@login_required
+def payment(request, tree_id):
+    tree = get_object_or_404(Tree, pk=tree_id)
 
+    default_location, created = PlantingLocation.objects.get_or_create(
+        name="Unknown Location", 
+        defaults={
+            "description": "Auto-assigned due to direct payment.",
+            "location_type": "unspecified"
+        }
+    )
+
+    location = default_location 
+
+    existing = UserPlanting.objects.filter(user=request.user, tree=tree)
+    if not existing.exists():
+        UserPlanting.objects.create(user=request.user, tree=tree, location=location)
+
+    order = Purchase.objects.create(
+        user=request.user,
+        tree=tree,
+        location=location,
+        quantity=1,
+        total_price=tree.price,
+        status='pending'
+    )
+
+    return render(request, 'myapp/tree_payment.html', {
+        'tree': tree,
+        'location': location,
+        'order': order,
+    })
 def payment_success(request, tree_id):
-    # ทำอะไรก็ได้ เช่นแสดงผล, ข้อมูลต้นไม้
     return render(request, 'myapp/payment_success.html', {'tree_id': tree_id})
 
 @login_required
@@ -240,9 +298,9 @@ def select_address(request, equipment_id):
 def equipment_payment(request, equipment_id):
     equipment = get_object_or_404(Equipment, pk=equipment_id)
     qty = int(request.GET.get("qty", 1))
-    address = request.GET.get("address", "")  # รับ address มาจาก step ก่อนหน้า
+    address = request.GET.get("address", "") 
 
-    # คุณอาจบันทึก address หรือแสดงในหน้า payment ก็ได้
+
     return render(request, 'myapp/equipment_payment.html', {
         'equipment': equipment,
         'qty': qty,
@@ -258,7 +316,7 @@ def generate_qr_base64(total):
     qr_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
     return qr_base64
 
-from datetime import timedelta  # อย่าลืม import นี้ด้วย
+
 
 @login_required
 def my_orders(request):
@@ -269,42 +327,33 @@ def my_orders(request):
     if selected_status != 'all':
         purchases = purchases.filter(status=selected_status)
 
-    phone_number = "0612345678"
-    now = timezone.now()
+    counts = {
+        'all': Purchase.objects.filter(user=user).count(),
+        'pending': Purchase.objects.filter(user=user, status='pending').count(),
+        'verifying': Purchase.objects.filter(user=user, status='verifying').count(),
+        'preparing': Purchase.objects.filter(user=user, status='preparing').count(),
+        'shipping': Purchase.objects.filter(user=user, status='shipping').count(),
+        'delivered': Purchase.objects.filter(user=user, status='delivered').count(),
+        'cancelled': Purchase.objects.filter(user=user, status='cancelled').count(),
+    }
 
     for order in purchases:
-        order.items_list = order.items.all()
+        order.items_list = order.items.filter(equipment__isnull=False)
         first_item = order.items_list.first()
-        if first_item:
-            if first_item.equipment:
-                order.first_image = first_item.equipment.image_url
-            elif first_item.tree:
-                order.first_image = first_item.tree.image_url
-            else:
-                order.first_image = 'https://via.placeholder.com/80'
-        else:
-            order.first_image = 'https://via.placeholder.com/80'
-
-        if order.status == 'pending':
-            expired_time = order.created_at + timedelta(minutes=30)
-            if now > expired_time:
-                order.status = 'cancelled'
-                order.save()
-                continue
-            order.qr_base64 = generate_qr_base64(phone_number, order.total_price)
+        order.first_image = first_item.equipment.image_url if first_item and first_item.equipment else 'https://via.placeholder.com/80'
 
     context = {
         "purchases": purchases,
+        "selected_status": selected_status,
+        "status_counts": counts,
         "status_list": [
-            ('all', 'ทั้งหมด', ''),
-            ('pending', 'รอชำระเงิน', 'status-pending'),
+            ('all', 'ทั้งหมด', 'status-all'),
             ('verifying', 'กำลังตรวจสอบ', 'status-verifying'),
             ('preparing', 'กำลังเตรียม', 'status-preparing'),
             ('shipping', 'กำลังจัดส่ง', 'status-shipping'),
             ('delivered', 'จัดส่งสำเร็จ', 'status-delivered'),
             ('cancelled', 'ยกเลิกแล้ว', 'status-cancelled'),
         ],
-        "show_tracking_status": ['shipping', 'delivered'],
     }
 
     return render(request, 'myapp/my_orders.html', context)
@@ -340,7 +389,7 @@ def add_to_cart(request, item_type, item_id):
     if request.method == 'POST':
         quantity = int(request.POST.get('quantity', 1))
 
-        # ตรวจสอบประเภท
+
         if item_type == 'tree':
             item = get_object_or_404(Tree, id=item_id)
         elif item_type == 'equipment':
@@ -351,18 +400,15 @@ def add_to_cart(request, item_type, item_id):
         cart = request.session.get('cart', [])
         item_found = False
 
-        # ตรวจสอบว่า item นั้นมีอยู่ใน cart แล้วหรือไม่
         for cart_item in cart:
             if cart_item['id'] == item.id and cart_item['type'] == item_type:
                 cart_item['qty'] += quantity
                 item_found = True
                 break
-
-        # ถ้ายังไม่เจอ item นี้เลยในตะกร้า
         if not item_found:
             cart.append({'id': item.id, 'qty': quantity, 'type': item_type})
 
-        # บันทึกกลับเข้า session
+
         request.session['cart'] = cart
 
         return redirect('cart')
@@ -396,13 +442,19 @@ def cart_view(request):
         cart_total += total_price
         if item_type == 'tree':
             cart_items_tree.append(item_data)
-        else:
+        elif item_type == 'equipment':
             cart_items_equipment.append(item_data)
+
+    item_groups = [
+        {'group': 'equipment', 'items': cart_items_equipment, 'label': '📦 อุปกรณ์'},
+        {'group': 'tree', 'items': cart_items_tree, 'label': '🌳 ต้นไม้ปลูกแทนคุณ'},
+    ]
 
     return render(request, 'myapp/cart.html', {
         'cart_items_equipment': cart_items_equipment,
         'cart_items_tree': cart_items_tree,
-        'cart_total': cart_total
+        'cart_total': cart_total,
+        'item_groups': item_groups,
     })
     
 
@@ -437,7 +489,6 @@ def confirm_cart(request):
         messages.error(request, "ไม่มีสินค้าในตะกร้า")
         return redirect('cart')
 
-    # เตรียมข้อมูลสินค้าและยอดรวม
     items = []
     total = 0
     for c in cart:
@@ -453,9 +504,7 @@ def confirm_cart(request):
             'qty': c['qty'],
             'total': item_total
         })
-from django.shortcuts import redirect, get_object_or_404
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+
 
 @login_required
 def process_cart_items(request):
@@ -465,22 +514,22 @@ def process_cart_items(request):
         messages.error(request, "ยังไม่มีสินค้าในตะกร้า")
         return redirect('cart')
 
-    # แยกประเภทสินค้า
     has_tree = any(item['type'] == 'tree' for item in cart)
     has_equipment = any(item['type'] == 'equipment' for item in cart)
 
-    # บันทึก cart ลง session สำหรับใช้ในขั้นถัดไป
     request.session['checkout_cart'] = cart
 
+    if 'cart' in request.session:
+        del request.session['cart']
+    request.session.modified = True 
+
     if has_tree and has_equipment:
-        return redirect('split_cart_confirmation')
-    
+        return redirect('select_address_multi')
+
     elif has_tree:
-        # 🔍 ตรวจให้แน่ใจว่ามี tree_id ก่อน redirect
         try:
             tree_item = next(item for item in cart if item['type'] == 'tree')
-            tree_id = tree_item['id']
-            return redirect('select_location_for_tree', tree_id=tree_id)
+            return redirect('select_location_for_tree', tree_id=tree_item['id'])
         except StopIteration:
             messages.error(request, "ไม่พบต้นไม้ในตะกร้า")
             return redirect('cart')
@@ -494,7 +543,7 @@ def start_planting_redirect(request):
     tree_id = request.POST.get('tree_id')
     if tree_id:
         return redirect('select_location_for_tree', tree_id=tree_id)
-    return redirect('cart')  # ถ้าไม่มี tree_id
+    return redirect('cart') 
 
 def signup(request):
     if request.method == 'POST':
@@ -502,66 +551,48 @@ def signup(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect('home')  # หรือ redirect ไป my_trees ก็ได้
+            return redirect('home') 
     else:
         form = UserCreationForm()
     return render(request, 'myapp/signup.html', {'form': form})
 
-from django.shortcuts import redirect
-from django.contrib import messages
-
-# ✅ views.py (เฉพาะฟังก์ชัน process_cart_items)
-from django.contrib import messages
-from django.shortcuts import redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-
-from django.contrib import messages
-from django.shortcuts import redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-
 @login_required
 def process_cart_items(request):
-    cart = request.session.get('cart', [])
-
-    if not cart:
-        messages.error(request, "ยังไม่มีสินค้าในตะกร้า")
+    if request.method != "POST":
         return redirect('cart')
 
-    has_tree = any(item['type'] == 'tree' for item in cart)
-    has_equipment = any(item['type'] == 'equipment' for item in cart)
+    selected = request.POST.get("selected_items", "")
+    if not selected:
+        messages.error(request, "กรุณาเลือกรายการอย่างน้อยหนึ่งรายการ")
+        return redirect('cart')
 
-    request.session['checkout_cart'] = cart
+    selected_items = selected.split(",")
+    cart = request.session.get("cart", [])
+
+    filtered_cart = [item for item in cart if f"{item['type']}:{item['id']}" in selected_items]
+
+    if not filtered_cart:
+        messages.error(request, "ไม่พบรายการที่เลือก")
+        return redirect('cart')
+
+    request.session['checkout_cart'] = filtered_cart
+
+    has_tree = any(item['type'] == 'tree' for item in filtered_cart)
+    has_equipment = any(item['type'] == 'equipment' for item in filtered_cart)
 
     if has_tree and has_equipment:
-        print(">>> CART มีทั้ง TREE และ EQUIPMENT:", cart)
-        return redirect('split_cart_confirmation')
+        return redirect('select_address_multi') 
 
     elif has_tree:
-        try:
-            tree_item = next(item for item in cart if item['type'] == 'tree')
-            tree_id = tree_item['id']
-            print(">>> CART:", cart)
-            print(">>> REDIRECT TO TREE:", tree_id)
-            return redirect('select_location_for_tree', tree_id=tree_id)
-        except StopIteration:
-            messages.error(request, "ไม่พบต้นไม้ในตะกร้า")
-            return redirect('cart')
+        tree_item = next(item for item in filtered_cart if item['type'] == 'tree')
+        return redirect('select_location_for_tree', tree_id=tree_item['id'])
 
     elif has_equipment:
-        print(">>> CART มีแต่ EQUIPMENT:", cart)
-        return redirect('select_address_multi')
+        return redirect('select_address_multi') 
 
-    print(">>> CART EMPTY OR INVALID:", cart)
     return redirect('cart')
 
 
-
-
-# ✅ select_location_for_tree.html (check this file exists in templates/myapp/)
-# ✅ Ensure the view is like this:
-from django.shortcuts import render, get_object_or_404
-from .models import Tree, PlantingLocation
-from django.contrib.auth.decorators import login_required
 
 @login_required
 def select_location_for_tree(request, tree_id):
@@ -579,8 +610,6 @@ def select_location_for_tree(request, tree_id):
         'query': query
     })
     
-def split_cart_confirmation(request):
-    return render(request, 'split_cart_confirmation.html')  # สร้างหน้าเปล่าๆ ก่อนก็ได้
 
 from myapp.utils.promptpay import generate_qr_base64
 
@@ -590,7 +619,7 @@ def equipment_payment(request, equipment_id):
     qty = int(request.GET.get("qty", 1))
     total = float(equipment.price) * qty
 
-    phone_number = "0612345678"  # เปลี่ยนได้
+    phone_number = "0612438750"  
     qr_base64 = generate_qr_base64(phone_number, total)
 
     return render(request, 'myapp/equipment_payment.html', {
@@ -629,7 +658,7 @@ def upload_slip(request, order_id):
     order = get_object_or_404(Purchase, id=order_id, user=request.user)
     if request.method == 'POST' and request.FILES.get('payment_slip'):
         order.payment_slip = request.FILES['payment_slip']
-        order.status = 'verifying'  # ✅ Set to verifying immediately
+        order.status = 'verifying' 
         order.save()
         return redirect('my_orders')
 
@@ -637,7 +666,7 @@ def upload_slip(request, order_id):
 @login_required
 def cancel_order(request, order_id):
     order = get_object_or_404(Purchase, id=order_id, user=request.user)
-    if order.status == 'verifying':  # ✅ เฉพาะตอนกำลังตรวจสอบเท่านั้น
+    if order.status == 'verifying':
         order.status = 'cancelled'
         order.save()
         messages.success(request, "คำสั่งซื้อถูกยกเลิกแล้ว")
@@ -650,7 +679,7 @@ def upload_slip(request, order_id):
     order = get_object_or_404(Purchase, id=order_id, user=request.user)
     if request.method == 'POST' and request.FILES.get('payment_slip'):
         order.payment_slip = request.FILES['payment_slip']
-        order.status = 'verifying'  # 👈 เปลี่ยนสถานะทันที
+        order.status = 'verifying'
         order.save()
         return redirect('my_orders')
 
@@ -714,7 +743,7 @@ def create_pending_order(request, equipment_id):
         )
         messages.success(request, "สร้างรายการเรียบร้อยแล้ว คุณสามารถแนบสลิปภายหลังได้ในหน้าคำสั่งซื้อของฉัน")
         return redirect('my_orders')
-    return redirect('equipment_payment', equipment_id=equipment_id)
+    return redirect('payment_multi.html', equipment_id=equipment_id)
 
 @csrf_exempt
 def auto_cancel_order(request, order_id):
@@ -737,11 +766,6 @@ def delete_slip(request, purchase_id):
         purchase.save()
     return redirect('my_orders')
 
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import Equipment # ถ้าคุณใช้ฟังก์ชันสร้าง QR
-from django.http import Http404
-
 @login_required
 def confirm_equipment_order(request):
     if request.method == 'POST':
@@ -756,7 +780,6 @@ def confirm_equipment_order(request):
 
         full_address = f"{address_detail}, ต.{subdistrict}, อ.{district}, จ.{province}, {zipcode}"
 
-        # ✅ ดึงจาก POST (ไม่ใช้ session)
         equipment_id = request.POST.get('equipment_id')
         if not equipment_id:
             raise Http404("ไม่พบรหัสสินค้า")
@@ -781,10 +804,155 @@ def confirm_equipment_order(request):
     return redirect('cart')
 
 
+
+
+@login_required
+def payment_multi(request):
+    cart = request.session.get('checkout_cart', [])
+    order_info = request.session.get('order_info', {})
+    tree_location_id = request.session.get('tree_location', None)
+    
+    total = 0
+    detailed_items = []
+
+    for item in cart:
+        item_type = item.get('type')
+        item_id = item.get('id')
+        qty = int(item.get('qty', 1))
+
+        if item_type == 'equipment':
+            product = get_object_or_404(Equipment, id=item_id)
+        elif item_type == 'tree':
+            product = get_object_or_404(Tree, id=item_id)
+        else:
+            continue
+
+        item_total = product.price * qty
+        total += item_total
+
+        detailed_items.append({
+            'name': product.name,
+            'image_url': product.image_url,
+            'price': product.price,
+            'qty': qty,
+            'total': item_total,
+            'type': item_type
+        })
+
+    qr_base64 = generate_qr_base64("0612438750", total)
+
+    from django.utils import timezone
+    now = timezone.now()
+    order_id = f"PJ{now.strftime('%Y%m%d%H%M%S')}"
+    total_items = sum(item['qty'] for item in detailed_items)
+
+    tree_location = PlantingLocation.objects.filter(id=tree_location_id).first() if tree_location_id else None
+
+    return render(request, 'myapp/payment_multi.html', {
+        'items': detailed_items,
+        'total': total,
+        'qr_base64': qr_base64,
+        'order_id': order_id,
+        'order_date': now,
+        'total_items': total_items,
+        'name': order_info.get('name', ''),
+        'tel': order_info.get('tel', ''),
+        'full_address': order_info.get('address', ''),
+        'tree_location': tree_location,
+        'has_tree': any(item['type'] == 'tree' for item in detailed_items),
+        'has_equipment': any(item['type'] == 'equipment' for item in detailed_items),  # ✅ ใช้ `:` แทน `=`
+    })
+
+
+@login_required
+def create_order_multi(request):
+    if request.method == 'POST':
+        cart = request.session.get('checkout_cart', [])
+        if not cart:
+            return redirect('cart')
+
+        name = request.POST.get('name', '')
+        tel = request.POST.get('tel', '')
+        address = request.POST.get('address', '')
+        slip = request.FILES.get('payment_slip', None)
+
+        has_tree = False
+        has_equipment = False
+        purchase = None
+
+        for item in cart:
+            if item['type'] == 'equipment':
+                if not purchase:
+                    purchase = Purchase.objects.create(
+                        user=request.user,
+                        name=name,
+                        tel=tel,
+                        address=address,
+                        payment_slip=slip,
+                        status='pending'
+                    )
+                product = get_object_or_404(Equipment, id=item['id'])
+                PurchaseItem.objects.create(
+                    purchase=purchase,
+                    equipment=product,
+                    quantity=item['qty']
+                )
+                has_equipment = True
+
+        for item in cart:
+            if item['type'] == 'tree':
+                product = get_object_or_404(Tree, id=item['id'])
+                location_id = request.session.get('tree_location')
+                location = get_object_or_404(PlantingLocation, id=location_id) if location_id else None
+                UserPlanting.objects.create(
+                    user=request.user,
+                    tree=product,
+                    location=location,
+                    status='verifying' 
+                )
+                send_notification(request.user, f"ต้นไม้ {product.name} ของคุณถูกเพิ่มเรียบร้อยแล้ว รอการดูแลหรือปลูกจริงในเร็ว ๆ นี้")
+                has_tree = True
+
+        request.session.pop('checkout_cart', None)
+        request.session.pop('tree_location', None)
+        request.session.pop('order_info', None)
+        request.session.pop('shipping_info', None)
+
+        if has_tree and not has_equipment:
+            return redirect('my_trees')
+        elif has_equipment:
+            return redirect('my_orders')
+
+    return redirect('cart')
+
+@login_required
+def select_address_multi(request):
+    cart = request.session.get('cart', [])
+    if not cart:
+        return redirect('cart') 
+
+    if request.method == 'POST':
+        request.session['shipping_info'] = {
+            'name': request.POST.get('name'),
+            'tel': request.POST.get('tel'),
+            'province': request.POST.get('province'),
+            'district': request.POST.get('district'),
+            'subdistrict': request.POST.get('subdistrict'),
+            'zipcode': request.POST.get('zipcode'),
+            'address': request.POST.get('address'),
+        }
+        return redirect('confirm_cart_order') 
+
+    return render(request, 'myapp/select_address_multi.html', {
+        'cart': cart
+    })
+
+
 @login_required
 def confirm_cart_order(request):
     if request.method == 'POST':
-        cart = request.session.get('checkout_cart', [])        
+        cart = request.session.get('checkout_cart', [])
+
         name = request.POST.get('name')
         tel = request.POST.get('tel')
         province = request.POST.get('province')
@@ -795,151 +963,139 @@ def confirm_cart_order(request):
 
         full_address = f"{address_detail}, ต.{subdistrict}, อ.{district}, จ.{province}, {zipcode}"
 
-        total = 0
-        detailed_items = []
-        for item in cart:
-            item_type = item.get('type')
-            item_id = item.get('id')
-            qty = int(item.get('qty', 1))
-
-            if item_type == 'equipment':
-                product = get_object_or_404(Equipment, id=item_id)
-            else:
-                continue  # ยังไม่รองรับ tree ตรงนี้
-
-            item_total = qty * product.price
-            total += item_total
-
-            detailed_items.append({
-                'name': product.name,
-                'image_url': product.image_url,
-                'price': product.price,
-                'qty': qty,
-                'total': item_total
-            })
-
-        qr_base64 = generate_qr_base64("0612345678", total)
-
-        return render(request, 'myapp/payment_multi.html', {
-            'items': detailed_items,
-            'total': total,
-            'qr_base64': qr_base64,
+        request.session['order_info'] = {
             'name': name,
             'tel': tel,
-            'full_address': full_address,
-        })
-
-    return redirect('cart')
-
-from .models import Purchase, PurchaseItem, Equipment
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, get_object_or_404, render
-from django.contrib import messages
-
-@login_required
-def create_order_multi(request):
-    if request.method == 'POST':
-        cart = request.session.get('checkout_cart', [])
-        if not cart:
-            messages.error(request, "ไม่พบรายการสินค้า")
-            return redirect('cart')
-
-        name = request.POST.get('name')
-        tel = request.POST.get('tel')
-        address = request.POST.get('address')
-        slip = request.FILES.get('payment_slip')
-        total_quantity = sum(item['qty'] for item in cart if item['type'] == 'equipment')
-        # สร้างออเดอร์หลัก (รวมทั้งหมด)
-        purchase = Purchase.objects.create(
-            user=request.user,
-            name=name,
-            tel=tel,
-            address=address,
-            payment_slip=slip,
-            status='pending',
-        )
-
-        for item in cart:
-            if item['type'] == 'equipment':
-                product = get_object_or_404(Equipment, id=item['id'])
-                PurchaseItem.objects.create(
-                    purchase=purchase,
-                    equipment=product,
-                    quantity=item['qty']
-                )
-            # หมายเหตุ: ถ้ามี tree จะต้องแยก flow ไปอีกแบบ ไม่ควรมาอยู่ในนี้
-
-        del request.session['checkout_cart']
-        request.session.pop('shipping_info', None)        
-        messages.success(request, "สั่งซื้อสำเร็จแล้ว กรุณารอการตรวจสอบสลิป")
-        return redirect('my_orders')
-
-    return redirect('cart')
-
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-
-@login_required
-def select_address_multi(request):
-    cart = request.session.get('cart', [])
-    if not cart:
-        return redirect('cart')  # กลับไปถ้าไม่มีสินค้า
-
-    if request.method == 'POST':
-        # เก็บข้อมูลที่อยู่ลงใน session
-        request.session['shipping_info'] = {
-            'name': request.POST.get('name'),
-            'tel': request.POST.get('tel'),
-            'province': request.POST.get('province'),
-            'district': request.POST.get('district'),
-            'subdistrict': request.POST.get('subdistrict'),
-            'zipcode': request.POST.get('zipcode'),
-            'address': request.POST.get('address'),
+            'address': full_address,
         }
-        return redirect('confirm_cart_order')  # ไปขั้นตอนถัดไป
 
-    # ถ้า GET ให้แสดงฟอร์ม
-    return render(request, 'myapp/select_address_multi.html', {
-        'cart': cart
+        tree_item = next((item for item in cart if item['type'] == 'tree'), None)
+        if tree_item:
+            return redirect('select_location_for_tree', tree_id=tree_item['id'])
+
+        return redirect('payment_multi')
+
+    return redirect('cart')
+
+
+@login_required
+def select_location_for_tree(request, tree_id):
+    locations = PlantingLocation.objects.all()
+    query = request.GET.get('q')
+    if query:
+        locations = locations.filter(name__icontains=query)
+
+    if request.method == 'POST':
+        selected_location_id = request.POST.get('location_id')
+        request.session['tree_location'] = selected_location_id
+        return redirect('payment_multi')
+
+    return render(request, 'myapp/select_location_for_tree.html', {
+        'tree': get_object_or_404(Tree, id=tree_id),
+        'locations': locations,
+        'query': query,
     })
 
 
-def split_cart_confirmation(request):
-    return render(request, 'myapp/split_cart_confirmation.html')
+
 
 def confirm_cart_split(request):
     if request.method == 'POST':
         choice = request.POST.get('choice')
         if choice == 'separate':
-            return redirect('separate_order_flow')  # เปลี่ยนชื่อ view ให้ตรงกับจริง
+            return redirect('separate_order_flow') 
         else:
             return redirect('combine_order_flow')
 
 
-from django.shortcuts import render
-from django.views.decorators.csrf import csrf_protect
-from django.contrib.auth.decorators import login_required
-
-PROVINCE_DATA = {
-    "ภาคเหนือ": ["เชียงใหม่", "เชียงราย", "ลำพูน", "ลำปาง", "แพร่", "น่าน", "พะเยา", "แม่ฮ่องสอน", "อุตรดิตถ์", "ตาก"],
-    "ภาคกลาง": ["กรุงเทพมหานคร", "นนทบุรี", "ปทุมธานี", "พระนครศรีอยุธยา", "สมุทรปราการ", "สมุทรสาคร", "สมุทรสงคราม", "นครปฐม", "สุพรรณบุรี", "สระบุรี", "อ่างทอง", "ลพบุรี", "ชัยนาท", "สิงห์บุรี"],
-    "ภาคตะวันออก": ["ชลบุรี", "ระยอง", "จันทบุรี", "ตราด", "ปราจีนบุรี", "สระแก้ว", "ฉะเชิงเทรา"],
-    "ภาคตะวันตก": ["กาญจนบุรี", "ราชบุรี", "เพชรบุรี", "ประจวบคีรีขันธ์"],
-    "ภาคตะวันออกเฉียงเหนือ": ["ขอนแก่น", "อุบลราชธานี", "นครราชสีมา", "มหาสารคาม", "ร้อยเอ็ด", "ชัยภูมิ", "อุดรธานี", "สกลนคร", "นครพนม", "มุกดาหาร", "บึงกาฬ", "หนองคาย", "หนองบัวลำภู", "ยโสธร", "ศรีสะเกษ", "อำนาจเจริญ", "กาฬสินธุ์", "เลย", "สุรินทร์", "บุรีรัมย์"],
-    "ภาคใต้": ["ภูเก็ต", "สงขลา", "สุราษฎร์ธานี", "กระบี่", "ตรัง", "พังงา", "นครศรีธรรมราช", "ชุมพร", "ระนอง", "ปัตตานี", "ยะลา", "นราธิวาส", "สตูล"]
-}
-
-@login_required
-def select_province_page(request):
-    return render(request, 'myapp/select_location_by_province.html', {
-        'province_groups': PROVINCE_DATA
-    })
 
 @login_required
 @csrf_protect
 def plant_tree_in_province(request):
     if request.method == 'POST':
         province = request.POST.get('province')
-        # ทำอะไรบางอย่าง เช่น redirect ไปหน้าเลือกต้นไม้ หรือหน้าคอนเฟิร์มพื้นที่
         return render(request, 'myapp/confirm_province_plant.html', {'province': province})
     return redirect('select_province_page')
+
+    
+
+@login_required
+def confirm_tree_payment(request, tree_id):
+    if request.method == 'POST' and request.FILES.get('payment_slip'):
+        tree = get_object_or_404(Tree, id=tree_id)
+        TreePaymentSlip.objects.create(
+            user=request.user,
+            tree=tree,
+            image=request.FILES['payment_slip']
+        )
+        return redirect('my_trees')
+    return redirect('home')
+
+def home(request):
+    return render(request, 'myapp/home.html')
+
+
+
+def home(request):
+
+    top_tree = Tree.objects.annotate(order_count=Count('userplanting')).order_by('-order_count').first()
+
+    context = {
+        'top_tree': top_tree,
+    }
+
+    return render(request, 'myapp/home.html', context)
+
+@receiver(post_save, sender=Purchase)
+def send_notification_on_status_change(sender, instance, created, **kwargs):
+    if not created:
+        status_messages = {
+            'verifying': f"คำสั่งซื้อ #{instance.id} กำลังตรวจสอบสลิป",
+            'preparing': f"คำสั่งซื้อ #{instance.id} กำลังจัดเตรียมสินค้า",
+            'shipping': f"คำสั่งซื้อ #{instance.id} กำลังจัดส่ง",
+            'delivered': f"คำสั่งซื้อ #{instance.id} จัดส่งสำเร็จแล้ว",
+            'cancelled': f"คำสั่งซื้อ #{instance.id} ถูกยกเลิก",
+        }
+        msg = status_messages.get(instance.status)
+        if msg:
+            Notification.objects.create(
+                user=instance.user,
+                message=msg
+            )
+
+def news_detail(request, article_id):
+    article = get_object_or_404(NewsArticle, id=article_id)
+    return render(request, 'myapp/news_detail.html', {'article': article})
+
+@login_required
+def notification_list(request):
+    notifications = Notification.objects.filter(user=request.user).order_by('-notification_date')
+    return render(request, 'myapp/notification_list.html', {
+        'notifications': notifications
+    })
+
+def send_notification(user, message):
+    Notification.objects.create(user=user, message=message)
+
+
+
+@receiver(post_save, sender=Purchase)
+def send_notification_on_status_change(sender, instance, created, **kwargs):
+    if not created:
+        status_messages = {
+            'verifying': f"คำสั่งซื้อ #{instance.id} กำลังตรวจสอบสลิป",
+            'preparing': f"คำสั่งซื้อ #{instance.id} กำลังจัดเตรียมสินค้า",
+            'shipping': f"คำสั่งซื้อ #{instance.id} กำลังจัดส่ง",
+            'delivered': f"คำสั่งซื้อ #{instance.id} จัดส่งสำเร็จแล้ว",
+            'cancelled': f"คำสั่งซื้อ #{instance.id} ถูกยกเลิก",
+        }
+        msg = status_messages.get(instance.status)
+        if msg:
+            Notification.objects.create(user=instance.user, message=msg)
+
+def mark_planting_completed(request, planting_id):
+    planting = get_object_or_404(UserPlanting, id=planting_id)
+    planting.status = 'completed'
+    planting.save()
+    send_notification(planting.user, f"ต้นไม้ {planting.tree.name} ของคุณปลูกสำเร็จแล้ว 🌳")
+    return redirect('some_admin_page')

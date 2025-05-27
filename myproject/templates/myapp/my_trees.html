@@ -1,104 +1,178 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}My Trees | PLOOKJING{% endblock %}
+{% load custom_filters %}
+
+{% block title %}ต้นไม้ของฉัน | PLOOKJING{% endblock %}
 
 {% block content %}
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
 <style>
-  .my-trees-container {
-    max-width: 1100px;
-    margin: 3rem auto;
-    font-family: 'Prompt', sans-serif;
-    background: #fff;
-    padding: 2rem;
-    border-radius: 16px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-  }
-  .my-trees-header {
+  body { font-family: 'Prompt', sans-serif; background-color: #F3F6F9; }
+  .orders-page { max-width: 1080px; margin: 2rem auto; padding: 2rem; }
+
+  .orders-header {
     font-size: 2rem;
     font-weight: bold;
     color: #0D3F31;
+    text-align: center;
     margin-bottom: 2rem;
+  }
+
+  .status-filter {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 0.8rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .status-tab {
+    padding: 0.6rem 1.4rem;
+    background: #E6F4EC;
+    color: #0D6E3E;
+    border-radius: 999px;
+    font-weight: 600;
+    text-decoration: none;
+    border: 2px solid transparent;
+    white-space: nowrap;
+  }
+
+  .status-tab:hover {
+    background: #CCE9DB;
+  }
+
+  .status-tab.active {
+    background: #FB7E2B;
+    color: white;
+    border-color: #FB7E2B;
+  }
+
+  .order-item {
+    background: white;
+    border-radius: 16px;
+    padding: 1.2rem 1.5rem;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.04);
+    margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 1rem;
+    cursor: pointer;
   }
-  .tree-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 2rem;
-  }
-  .tree-card {
-    background: #F3FDF6;
-    border: 1px solid #CCEED4;
-    border-radius: 14px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-    padding: 1rem;
-    text-align: center;
-    transition: transform 0.2s ease;
-  }
-  .tree-card:hover {
-    transform: translateY(-4px);
-    background-color: #E6FAF0;
-  }
-  .tree-card img {
-    width: 100%;
-    height: 180px;
+
+  .order-item img {
+    width: 80px;
+    height: 80px;
     object-fit: cover;
-    border-radius: 12px;
-    margin-bottom: 1rem;
+    border-radius: 10px;
+    border: 1px solid #E0E0E0;
   }
-  .tree-card h3 {
-    font-size: 1.2rem;
-    color: #0D3F31;
-    margin-bottom: 0.5rem;
+
+  .order-info { flex: 1; }
+
+  .order-info h4 {
+    font-size: 1rem;
+    color: #FB7E2B;
+    margin: 0;
+    font-weight: 600;
   }
-  .tree-card p {
-    font-size: 0.95rem;
-    color: #444;
-    margin-bottom: 0.3rem;
+
+  .order-info p {
+    margin: 0.2rem 0;
+    color: #555;
+    font-size: 0.92rem;
   }
-  .status {
-    display: inline-block;
-    background: #D9F5D4;
-    color: #2F684E;
-    padding: 0.4rem 1rem;
-    border-radius: 8px;
+
+  .order-date {
     font-size: 0.85rem;
-    font-weight: bold;
-    margin-top: 0.8rem;
+    color: #999;
   }
-  .no-tree {
-    text-align: center;
-    font-size: 1.1rem;
-    color: #777;
-    margin-top: 3rem;
+
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.4);
+    overflow-y: auto;
+  }
+
+  .modal-content {
+    background: white;
+    margin: 5% auto;
+    padding: 2rem;
+    border-radius: 16px;
+    max-width: 640px;
+    position: relative;
+    font-family: 'Prompt', sans-serif;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  }
+
+  .close {
+    position: absolute;
+    top: 0.8rem;
+    right: 1rem;
+    font-size: 2rem;
+    color: #999;
+    cursor: pointer;
+  }
+
+  .gray-box {
+    background: #F9FAFB;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
   }
 </style>
 
-<div class="my-trees-container">
-  <div class="my-trees-header"> My Trees</div>
+<div class="orders-page">
+  <div class="orders-header">ต้นไม้ของฉัน</div>
 
-  {% if trees %}
-  <div class="tree-list">
-    {% for tree in trees %}
-    <div class="tree-card">
-      {% if tree.tree.image_url %}
-        <img src="{{ tree.tree.image_url }}" alt="{{ tree.tree.name }}">
-      {% else %}
-        <img src="{% static 'images/default_tree.png' %}" alt="No Image">
-      {% endif %}
-      <h3>{{ tree.tree.name }}</h3>
-      <p><strong>Location:</strong> {{ tree.location.name }}</p>
-      <p><strong>Planted on:</strong> {{ tree.planting_date|date:"d M Y" }}</p>
-      <span class="status">{% if tree.is_completed %}Completed{% else %}In Progress{% endif %}</span>
+  <div class="status-filter">
+    <a href="?status=all" class="status-tab {% if selected_status == 'all' %}active{% endif %}">ทั้งหมด ({{ status_counts.all }})</a>
+    <a href="?status=verifying" class="status-tab {% if selected_status == 'verifying' %}active{% endif %}">กำลังตรวจสอบ ({{ status_counts.verifying }})</a>
+    <a href="?status=in_progress" class="status-tab {% if selected_status == 'in_progress' %}active{% endif %}">กำลังดำเนินการ ({{ status_counts.in_progress }})</a>
+    <a href="?status=completed" class="status-tab {% if selected_status == 'completed' %}active{% endif %}">ปลูกสำเร็จแล้ว ({{ status_counts.completed }})</a>
+  </div>
+
+  {% for tree in trees %}
+    <div class="order-item" onclick="openModal('modal-{{ tree.id }}')">
+      <img src="{{ tree.tree.image_url|default:'/static/images/default_tree.png' }}" alt="{{ tree.tree.name }}">
+      <div class="order-info">
+        <h4>{{ tree.tree.name }}</h4>
+        <p>สถานที่ {{ tree.location.name }}</p>
+        <p class="order-date">เมื่อ {{ tree.planting_date|date:"d/m/Y เวลา H:i" }}</p>
+        <p><strong>สถานะ</strong> {{ tree.get_status_display }}</p>
+      </div>
     </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <div class="no-tree">
-    You haven't planted any trees yet. Start your journey today! 
-  </div>
-  {% endif %}
+
+    <div id="modal-{{ tree.id }}" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal('modal-{{ tree.id }}')">&times;</span>
+        <h3>รายละเอียดต้นไม้</h3>
+
+        <div class="gray-box">
+          <p><strong>ชื่อพันธุ์ไม้</strong> {{ tree.tree.name }}</p>
+          <p><strong>คำอธิบาย</strong> {{ tree.tree.description|default:"-" }}</p>
+          <p><strong>สถานที่ปลูก</strong> {{ tree.location.name }}</p>
+          <p><strong>วันที่สั่งซื้อ</strong> {{ tree.planting_date|date:"d/m/Y เวลา H:i" }}</p>
+          {% if tree.status == 'completed' %}
+            <p><strong>วันที่ปลูกสำเร็จ</strong> {{ tree.planting_date|date:"d/m/Y เวลา H:i" }}</p>
+          {% endif %}
+        </div>
+
+        <div class="gray-box">
+          <p><strong>สถานะ</strong> {{ tree.get_status_display }}</p>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <p style="text-align:center; color:#777;">คุณยังไม่ได้ปลูกต้นไม้ใด ๆ</p>
+  {% endfor %}
 </div>
+
+<script>
+  function openModal(id) { document.getElementById(id).style.display = 'block'; }
+  function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+</script>
 {% endblock %}

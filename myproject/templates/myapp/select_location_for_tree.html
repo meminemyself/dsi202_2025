@@ -1,113 +1,175 @@
 {% extends 'base.html' %}
-{% block title %}เลือกจังหวัดปลูกต้นไม้{% endblock %}
 {% load static %}
 
+{% block title %}เลือกสถานที่ปลูกต้นไม้ | PLOOKJING{% endblock %}
+
 {% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+
 <style>
   body {
-    background: #F0FAF5;
     font-family: 'Prompt', sans-serif;
+    background-color: #F3F6F9;
   }
 
-  .location-container {
-    max-width: 1000px;
+  .location-page {
+    max-width: 1100px;
     margin: 2.5rem auto;
     padding: 2.5rem;
     background: white;
     border-radius: 20px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    animation: fadeInUp 0.5s ease-in-out;
   }
 
-  .location-title {
+  .location-header {
     font-size: 2rem;
     font-weight: bold;
     color: #0D3F31;
-    margin-bottom: 1rem;
     text-align: center;
-  }
-
-  .tree-highlight {
-    background: #FB7E2B;
-    color: white;
-    font-size: 1.2rem;
-    padding: 0.6rem 1.4rem;
-    border-radius: 12px;
-    display: inline-block;
-    margin: 0 auto 2rem;
-    text-align: center;
-  }
-
-  .region-label {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #1A6450;
-    margin: 1.5rem 0 0.7rem;
-  }
-
-  .province-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 1rem;
-  }
-
-  .province-btn {
-    display: block;
-    text-align: center;
-    padding: 0.9rem 1.1rem;
-    background: #E0F2EA;
-    color: #0D3F31;
-    border-radius: 14px;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    transition: 0.25s ease;
-    font-size: 1rem;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
-  }
-
-  .province-btn:hover {
-    background: #C3ECD6;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
-  }
-
-  .province-form {
-    display: inline;
-  }
-
-  .region-section {
     margin-bottom: 2rem;
+  }
+
+  .search-form {
+    display: flex;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+  }
+
+  .search-form input {
+    padding: 0.75rem 1rem;
+    border-radius: 999px;
+    border: 2px solid #0D3F31;
+    font-size: 1rem;
+    width: 300px;
+    background: #F9FCFB;
+    color: #0D3F31;
+  }
+
+  .search-form button {
+    padding: 0.75rem 1.6rem;
+    background: linear-gradient(135deg, #FB7E2B, #FFA15C);
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 10px rgba(251, 126, 43, 0.3);
+  }
+
+  .search-form button:hover {
+    background: linear-gradient(135deg, #E76C1C, #FF9933);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(251, 126, 43, 0.4);
+  }
+
+  .location-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 2rem;
+  }
+
+  .location-card {
+    background-color: #F9FCFB;
+    border: 2px solid #CCEED4;
+    padding: 1.5rem;
+    border-radius: 18px;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .location-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+  }
+
+  .location-card h3 {
+    color: #0D3F31;
+    font-size: 1.2rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .location-card p {
+    color: #444;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .plant-button {
+    margin-top: 1.2rem;
+    display: inline-block;
+    padding: 0.7rem 1.2rem;
+    background-color: #FB7E2B;
+    color: white;
+    border: none;
+    border-radius: 999px;
+    font-weight: bold;
+    font-size: 0.95rem;
+    text-align: center;
+    text-decoration: none;
+    box-shadow: 0 3px 10px rgba(251, 126, 43, 0.2);
+    transition: background-color 0.3s ease;
+  }
+
+  .plant-button:hover {
+    background-color: #E76C1C;
+  }
+
+  .intro-box {
+    text-align: center;
+    font-size: 1rem;
+    color: #666;
+    margin-top: 2.5rem;
+  }
+
+  .contact-link {
+    color: #FB7E2B;
+    font-weight: bold;
+    text-decoration: none;
+  }
+
+  .contact-link:hover {
+    text-decoration: underline;
+  }
+
+  @keyframes fadeInUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
   }
 </style>
 
-<div class="location-container">
-  <div class="location-title">เลือกจังหวัดสำหรับปลูกต้นไม้</div>
-  <div class="tree-highlight">🌳 {{ tree.name }}</div>
+<div class="location-page">
+  <div class="location-header">เลือกสถานที่ปลูกต้นไม้ของคุณ</div>
 
-  {% regroup locations by location_type as region_list %}
+  <form method="get" class="search-form">
+    <input type="text" name="q" value="{{ query }}" placeholder="ค้นหาจังหวัด..." />
+    <button type="submit">ค้นหา</button>
+  </form>
 
-  {% for region in region_list %}
-  <div class="region-section">
-    <div class="region-label">🗺️ ภูมิภาค: {{ region.grouper }}</div>
-    <div class="province-grid">
-      {% for location in region.list %}
-        <form method="post" action="{% url 'plant_tree_at_location' tree.id location.id %}" class="province-form">
-          {% csrf_token %}
-          <button type="submit" class="province-btn">{{ location.name }}</button>
-        </form>
+  {% if locations %}
+    <div class="location-grid">
+      {% for location in locations %}
+        <div class="location-card">
+          <h3>{{ location.name }}</h3>
+          <p>{{ location.description|truncatechars:100 }}</p>
+          <a href="{% url 'plant_tree_at_location' tree.id location.id %}" class="plant-button">
+            เลือกจังหวัดนี้
+          </a>
+        </div>
       {% endfor %}
     </div>
+  {% else %}
+    <div class="intro-box">
+      ไม่พบสถานที่ปลูก
+    </div>
+  {% endif %}
+
+  <div class="intro-box">
+    ต้องการเสนอพื้นที่ปลูกเพิ่มเติม?
+    <a href="{% url 'contact' %}" class="contact-link">ติดต่อเรา</a>
   </div>
-  {% endfor %}
 </div>
-<script>
-  const searchInput = document.getElementById("province-search");
-  searchInput?.addEventListener("input", function () {
-    const filter = this.value.toLowerCase();
-    document.querySelectorAll(".province-btn").forEach(btn => {
-      const name = btn.innerText.toLowerCase();
-      btn.parentElement.style.display = name.includes(filter) ? "" : "none";
-    });
-  });
-</script>
 {% endblock %}

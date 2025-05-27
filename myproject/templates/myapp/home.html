@@ -1,202 +1,172 @@
 {% extends 'base.html' %}
-{% block title %}Home | PLOOKJING{% endblock %}
+{% load static %}
+{% block title %}หน้าแรก | PLOOKJING{% endblock %}
 
 {% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
 <style>
+  body {
+    font-family: 'Prompt', sans-serif;
+    background-color: #F3F6F9;
+  }
   .hero {
-    background: linear-gradient(120deg, #FB7E2B20, #0D3F3110);
-    padding: 3rem 2rem;
-    border-radius: 20px;
+    background: linear-gradient(to right, #EAF8F1, #FFF4E6);
     text-align: center;
-    margin-bottom: 2rem;
+    padding: 4rem 2rem 2rem;
+    border-radius: 20px;
+    margin-bottom: 3rem;
     box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-    animation: fadeIn 1s ease;
+  }
+  .hero h1 { font-size: 2.5rem; color: #0D3F31; margin-bottom: 1rem; }
+  .hero p { font-size: 1.2rem; color: #444; }
+  .cta-btn {
+    display: inline-block; margin-top: 1.2rem; background: #FB7E2B; color: white;
+    padding: 0.6rem 1.4rem; border-radius: 999px; font-weight: bold;
+    transition: background 0.3s; font-size: 0.95rem; text-decoration: none;
+  }
+  .cta-btn:hover { background: #e96f1f; }
+
+  .section-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem; margin: 0 auto 4rem; max-width: 1080px;
   }
 
-  .hero h1 {
-    font-size: 2.5rem;
-    color: var(--green-dark);
-    margin-bottom: 1rem;
+  .card-box {
+    background: white; height: 360px; padding: 2rem; border-radius: 16px;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: center;
   }
 
-  .hero p {
-    font-size: 1.2rem;
-    color: #444;
+  .card-box h2 { font-size: 1.4rem; color: #0D3F31; margin-bottom: 1.2rem; text-align: center; }
+
+  .step-item { display: flex; align-items: center; margin: 0.8rem 0; }
+  .step-icon {
+    width: 36px; height: 36px; background: #FB7E2B; color: white; font-weight: bold;
+    display: flex; justify-content: center; align-items: center; border-radius: 50%; margin-right: 1rem;
   }
 
-  .featured-tree {
-    background: white;
-    display: flex;
-    flex-wrap: wrap;
-    margin: 3rem 0;
-    border-radius: 20px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.05);
-    overflow: hidden;
+  .tree-month img {
+    width: 100%; height: 180px; object-fit: cover;
+    border-radius: 12px; margin-bottom: 0.7rem;
   }
 
-  .featured-tree img {
-    flex: 1 1 300px;
-    object-fit: cover;
-    width: 100%;
-    max-height: 360px;
+  .tree-month-content {
+    display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem;
   }
 
-  .featured-tree .info {
-    flex: 1 1 300px;
-    padding: 2rem;
-    background: linear-gradient(180deg, var(--green-light), #fff);
+  .tree-month-content h4 { color: #0D3F31; font-size: 1.1rem; margin: 0; }
+
+  .why-plant-wrapper {
+    max-width: 1080px; margin: 4rem auto; padding: 0 1.5rem;
   }
 
-  .featured-tree h2 {
-    font-size: 2rem;
-    color: var(--green-dark);
-    margin-bottom: 0.5rem;
+  .why-plant-title { text-align: center; margin-bottom: 2.5rem; }
+  .why-plant-title h2 { font-size: 2rem; color: #0D3F31; margin-bottom: 0.5rem; }
+  .why-plant-title p { font-size: 1.05rem; color: #555; }
+
+  .why-plant-cards {
+    display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: space-between;
   }
 
-  .featured-tree p {
-    color: #333;
-    font-size: 1rem;
-    line-height: 1.6;
+  .why-card {
+    flex: 1 1 310px; background: white; border-radius: 16px; padding: 1.5rem;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.05); display: flex; align-items: flex-start;
+    transition: all 0.3s ease;
   }
 
-  .featured-tree .price {
-    margin-top: 1rem;
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: var(--orange);
+  .why-card:hover {
+    transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.07);
   }
 
-  .news-highlight {
-    margin: 2rem 0;
+  .why-icon svg {
+    width: 28px; height: 28px; margin-right: 1rem; flex-shrink: 0; fill: #FB7E2B;
   }
 
-  .news-highlight h3 {
-    color: var(--green-dark);
-    font-size: 1.6rem;
-    margin-bottom: 1rem;
+  .why-content h4 { margin: 0; font-size: 1.1rem; color: #0D3F31; margin-bottom: 0.3rem; }
+  .why-content p { margin: 0; font-size: 0.95rem; color: #555; line-height: 1.5; }
+
+  .membership-box {
+    background: linear-gradient(to right, #DFF5E4, #FFF3E0);
+    padding: 2rem; border-radius: 16px; text-align: center; margin: 3rem auto;
+    max-width: 1000px;
   }
 
-  .news-card {
-    background: white;
-    padding: 1rem;
-    border-radius: 16px;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.06);
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
-    align-items: center;
-  }
+  .membership-box h3 { margin-bottom: 0.5rem; color: #0D3F31; }
 
-  .news-card img {
-    width: 140px;
-    height: 100px;
-    object-fit: cover;
-    border-radius: 12px;
-  }
-
-  .news-card h4 {
-    font-size: 1.1rem;
-    color: var(--green-dark);
-    margin: 0 0 0.3rem;
-  }
-
-  .news-card p {
-    font-size: 0.9rem;
-    color: #666;
-    margin: 0;
-  }
-
-  .quick-actions {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1.5rem;
-    margin-top: 3rem;
-  }
-
-  .action-card {
-    background: var(--orange-soft);
-    padding: 1.5rem;
-    border-radius: 16px;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    transition: transform 0.2s ease;
-    text-decoration: none;
-  }
-
-  .action-card:hover {
-    transform: translateY(-5px);
-  }
-
-  .action-card i {
-    font-size: 2rem;
-    color: var(--orange);
-    margin-bottom: 0.5rem;
-  }
-
-  .action-card h4 {
-    margin: 0;
-    font-size: 1.1rem;
-    color: var(--green-dark);
-  }
-
-  .cta-banner {
-    margin-top: 4rem;
-    padding: 2rem;
-    background: linear-gradient(90deg, var(--orange), #FFD4B2);
-    border-radius: 20px;
-    text-align: center;
-    color: white;
-  }
-
-  .cta-banner h3 {
-    margin: 0 0 0.5rem;
-    font-size: 1.8rem;
-  }
-
-  .cta-banner a {
-    background-color: white;
-    color: var(--orange);
-    padding: 0.6rem 1.4rem;
-    border-radius: 30px;
-    font-weight: bold;
-    text-decoration: none;
-    margin-top: 1rem;
-    display: inline-block;
-    transition: background-color 0.2s;
-  }
-
-  .cta-banner a:hover {
-    background-color: #f5f5f5;
+  .signature {
+    text-align: center; font-style: italic; color: #999; margin-top: 3rem; font-size: 0.95rem;
   }
 </style>
 
 <div class="hero">
-  <h1>🌿 Welcome to PLOOKJING</h1>
-  <p>ปลูกต้นไม้ สร้างสิ่งแวดล้อม และเปลี่ยนโลกให้ดีขึ้นด้วยมือคุณ</p>
+  <h1>🌿 ยินดีต้อนรับสู่ PLOOKJING</h1>
+  <p>แพลตฟอร์มปลูกต้นไม้เพื่อสิ่งแวดล้อมที่คุณเข้าถึงได้จากทุกที่</p>
+  <a href="{% url 'tree_list' %}" class="cta-btn">เริ่มปลูกเลย</a>
 </div>
 
-<div class="quick-actions">
-  <a href="{% url 'tree_list' %}" class="action-card">
-    <i class="fas fa-tree"></i>
-    <h4>เลือกต้นไม้</h4>
-  </a>
-  <a href="{% url 'equipment_list' %}" class="action-card">
-    <i class="fas fa-tools"></i>
-    <h4>อุปกรณ์ปลูก</h4>
-  </a>
-  <a href="{% url 'my_trees' %}" class="action-card">
-    <i class="fas fa-leaf"></i>
-    <h4>ต้นไม้ของฉัน</h4>
-  </a>
-  <a href="{% url 'news_list' %}" class="action-card">
-    <i class="fas fa-newspaper"></i>
-    <h4>ข่าวสารล่าสุด</h4>
-  </a>
+<div class="section-grid">
+  <div class="card-box">
+    <h2>ขั้นตอนการปลูก</h2>
+    <div class="step-item"><div class="step-icon">1</div><div>เลือกต้นไม้ที่ชอบ</div></div>
+    <div class="step-item"><div class="step-icon">2</div><div>เลือกสถานที่ปลูก</div></div>
+    <div class="step-item"><div class="step-icon">3</div><div>ทีมงานเราปลูกให้พร้อมดูแล</div></div>
+  </div>
+
+  <div class="card-box tree-month">
+    <h2>Tree of the Month</h2>
+    {% if top_tree %}
+      <img src="{{ top_tree.image_url|default:'/static/images/default_tree.jpg' }}" alt="{{ top_tree.name }}">
+      <div class="tree-month-content">
+        <h4>{{ top_tree.name }}</h4>
+        <a href="{% url 'tree_detail' top_tree.id %}" class="cta-btn">ดูรายละเอียด</a>
+      </div>
+    {% else %}
+      <p>ยังไม่มีต้นไม้แนะนำ</p>
+    {% endif %}
+  </div>
 </div>
 
-<div class="cta-banner">
-  <h3>เริ่มปลูกต้นไม้วันนี้ 🌳</h3>
-  <p>ทำให้โลกใบนี้น่าอยู่ขึ้นทีละต้นไม้</p>
-  <a href="{% url 'signup' %}">สมัครสมาชิกเลย</a>
+<div class="why-plant-wrapper">
+  <div class="why-plant-title">
+    <h2>ทำไมต้องปลูกกับ PLOOKJING ?</h2>
+    <p>เพราะการปลูกต้นไม้ไม่ใช่แค่เรื่องสิ่งแวดล้อม แต่คือเรื่องของหัวใจและอนาคตร่วมกัน</p>
+  </div>
+  <div class="why-plant-cards">
+    <div class="why-card">
+      <div class="why-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 3.5 5 11 7 13s7-9.5 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5 14.5 7.62 14.5 9 13.38 11.5 12 11.5z"/></svg>
+      </div>
+      <div class="why-content">
+        <h4>เลือกสถานที่ได้</h4>
+        <p>กำหนดพิกัดปลูกเองหรือให้ระบบแนะนำพื้นที่สีเขียว</p>
+      </div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"/></svg>
+      </div>
+      <div class="why-content">
+        <h4>แจ้งเตือนทุกขั้นตอน</h4>
+        <p>อัปเดตสถานะปลูกและการดูแลต้นไม้ของคุณแบบเรียลไทม์</p>
+      </div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 6H4v2h16V6zm0 4H4v2h16v-2zm0 4H4v6h16v-6z"/></svg>
+      </div>
+      <div class="why-content">
+        <h4>ปลูกฟรีทุกเดือน</h4>
+        <p>สมาชิกได้รับต้นไม้ใหม่ทุกเดือน พร้อมการดูแลครบวงจร</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="membership-box">
+  <h3>สมัครสมาชิกรายเดือน (เร็วๆ นี้)</h3>
+  <p>รับต้นไม้ฟรีทุกเดือน พร้อมสิทธิพิเศษในการดูแลและติดตามต้นไม้</p>
+</div>
+
+<div class="signature">
+  PLOOKJING — ร่วมปลูกเพื่อโลกที่ดีกว่า 🌏
 </div>
 {% endblock %}

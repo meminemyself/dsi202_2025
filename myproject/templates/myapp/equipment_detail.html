@@ -1,22 +1,28 @@
 {% extends 'base.html' %}
 {% block title %}{{ equipment.name }} | PLOOKJING{% endblock %}
+{% load static %}
 
 {% block content %}
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
+  body {
+    font-family: 'Prompt', sans-serif;
+    background-color: #F3F6F9;
+  }
+
   .detail-page {
-    max-width: 1200px;
+    max-width: 1080px;
     margin: 2rem auto;
     padding: 1rem;
     display: flex;
+    flex-wrap: wrap;
     gap: 2rem;
-    font-family: 'Prompt', sans-serif;
   }
 
   .tree-image {
-    flex: 1;
-    background: #fff;
+    flex: 1 1 420px;
+    background: white;
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 6px 18px rgba(0,0,0,0.1);
@@ -24,13 +30,13 @@
 
   .tree-image img {
     width: 100%;
-    height: 500px;
+    aspect-ratio: 1 / 1;
     object-fit: cover;
   }
 
   .tree-info {
-    flex: 1;
-    background: #fff;
+    flex: 1 1 420px;
+    background: white;
     border-radius: 16px;
     padding: 2rem;
     box-shadow: 0 6px 18px rgba(0,0,0,0.1);
@@ -43,7 +49,7 @@
     font-size: 2rem;
     font-weight: bold;
     color: #0D3F31;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
   }
 
   .price {
@@ -53,11 +59,37 @@
     margin-bottom: 1rem;
   }
 
-  .desc {
+  .desc-container {
     font-size: 1rem;
-    color: #333;
-    margin-bottom: 1.5rem;
+    color: #444;
     line-height: 1.6;
+  }
+
+  .desc {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
+  }
+
+  .desc.expanded {
+    -webkit-line-clamp: unset;
+    max-height: none;
+  }
+
+  .toggle-link {
+    color: #FB7E2B;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: inline-block;
+    margin-top: 0.3rem;
+  }
+
+  .quantity-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
   }
 
   .quantity-control {
@@ -74,16 +106,10 @@
     background-color: #FB7E2B;
     border: none;
     color: white;
-    font-size: 1.4rem;
-    font-weight: bold;
+    font-size: 1.3rem;
     width: 40px;
     height: 40px;
     cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-
-  .quantity-control button:hover {
-    background-color: #E76C1C;
   }
 
   .quantity-control input {
@@ -94,8 +120,8 @@
     font-size: 1rem;
     font-weight: bold;
     color: #0D3F31;
-    outline: none;
     background: white;
+    outline: none;
   }
 
   .quantity-control input::-webkit-outer-spin-button,
@@ -108,53 +134,77 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    margin-top: 1rem;
   }
 
-  .action-buttons button.add-to-cart,
-  .action-buttons a.buy-now {
+  .action-buttons button,
+  .action-buttons a {
     text-align: center;
     padding: 0.9rem;
     font-weight: 600;
     border-radius: 10px;
-    transition: all 0.3s;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     font-size: 1rem;
     text-decoration: none;
-    display: block;
     width: 100%;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   }
 
-  .action-buttons button.add-to-cart {
+  .add-to-cart {
     background-color: #0D6E3E;
     color: white;
     border: none;
     cursor: pointer;
   }
 
-  .action-buttons button.add-to-cart:hover {
+  .add-to-cart:hover {
     background-color: #095C34;
   }
 
-  .action-buttons a.buy-now {
+  .buy-now {
     background-color: #FB7E2B;
     color: white;
   }
 
-  .action-buttons a.buy-now:hover {
+  .buy-now:hover {
     background-color: #E76C1C;
   }
 </style>
 
 <script>
   function changeQty(delta) {
-    const qtyInput = document.getElementById("qty");
-    let current = parseInt(qtyInput.value) || 1;
-    current += delta;
-    if (current < 1) current = 1;
-    qtyInput.value = current;
-    document.getElementById("form_qty_input").value = current;
-    document.getElementById("buy_now_link").href = `{% url 'select_address' equipment.id %}?qty=` + current;
+    const input = document.getElementById("qty");
+    let qty = parseInt(input.value) || 1;
+    qty = Math.max(1, qty + delta);
+    input.value = qty;
+    document.getElementById("form_qty_input").value = qty;
+    document.getElementById("buy_now_link").href = `{% url 'select_address' equipment.id %}?qty=` + qty;
   }
+
+  function toggleDesc() {
+    const desc = document.getElementById("desc");
+    const link = document.getElementById("toggleLink");
+    desc.classList.toggle("expanded");
+    link.textContent = desc.classList.contains("expanded") ? "ย่อข้อความ" : "อ่านเพิ่มเติม...";
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+  const desc = document.getElementById("desc");
+  const toggleLink = document.getElementById("toggleLink");
+
+  // สร้าง clone เพื่อวัดความสูงจริง
+  const clone = desc.cloneNode(true);
+  clone.style.webkitLineClamp = "unset";
+  clone.style.maxHeight = "none";
+  clone.style.visibility = "hidden";
+  clone.style.position = "absolute";
+  document.body.appendChild(clone);
+
+  if (clone.offsetHeight <= desc.offsetHeight) {
+    toggleLink.style.display = "none"; // ซ่อนปุ่มหากไม่เกิน 3 บรรทัด
+  }
+
+  document.body.removeChild(clone); // ลบ clone ออก
+});
 </script>
 
 <div class="detail-page">
@@ -162,9 +212,7 @@
     {% if equipment.image_url %}
       <img src="{{ equipment.image_url }}" alt="{{ equipment.name }}">
     {% else %}
-      <div class="w-full h-[500px] flex items-center justify-center text-gray-500 bg-gray-100">
-        No Image Available
-      </div>
+      <img src="{% static 'images/default_tree.jpg' %}" alt="ไม่มีรูปภาพ">
     {% endif %}
   </div>
 
@@ -172,25 +220,27 @@
     <div>
       <h1>{{ equipment.name }}</h1>
       <div class="price">{{ equipment.price|floatformat:2 }} บาท</div>
-      <div class="desc">{{ equipment.description }}</div>
+      <div class="desc-container">
+        <span id="desc" class="desc">{{ equipment.description }}</span>
+        <div id="toggleLink" class="toggle-link" onclick="toggleDesc()">อ่านเพิ่มเติม...</div>
+      </div>
+    </div>
 
-      <div style="display: flex; justify-content: flex-end; margin-bottom: 1.5rem;">
-        <div class="quantity-control" style="width: fit-content; min-width: 120px;">
+    <form action="{% url 'add_to_cart' 'equipment' equipment.id %}" method="post">
+      {% csrf_token %}
+      <div class="quantity-wrapper">
+        <div class="quantity-control">
           <button type="button" onclick="changeQty(-1)">−</button>
-          <input type="number" id="qty" name="qty" value="1" min="1">
+          <input type="number" id="qty" name="quantity" value="1" min="1">
           <button type="button" onclick="changeQty(1)">+</button>
         </div>
       </div>
-
       <div class="action-buttons">
-        <form action="{% url 'add_to_cart' 'equipment' equipment.id %}" method="post">
-          {% csrf_token %}
-          <input type="hidden" name="quantity" id="form_qty_input" value="1">
-          <button type="submit" class="add-to-cart">Add to Cart</button>
-        </form>
-        <a id="buy_now_link" href="{% url 'select_address' equipment.id %}?qty=1" class="buy-now">Buy Now</a>
+        <button type="submit" class="add-to-cart">เพิ่มลงตะกร้า</button>
+        <a id="buy_now_link" href="{% url 'select_address' equipment.id %}?qty=1" class="buy-now">ซื้อเลย</a>
       </div>
-    </div>
+    </form>
   </div>
 </div>
+
 {% endblock %}

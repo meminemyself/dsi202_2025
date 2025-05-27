@@ -1,38 +1,53 @@
 {% extends 'base.html' %}
-{% block title %}Login | PLOOKJING{% endblock %}
+{% load static %}
+{% load socialaccount %}
+
+{% block title %}เข้าสู่ระบบ | PLOOKJING{% endblock %}
+
 {% block content %}
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+
 <style>
+  body {
+    background: linear-gradient(to bottom right, #E4F3F0, #FFF6E8);
+    font-family: 'Prompt', sans-serif;
+  }
+
   .auth-container {
     max-width: 500px;
     margin: 4rem auto;
     padding: 2.5rem;
     background: white;
-    border-radius: 16px;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-    font-family: 'Prompt', sans-serif;
+    border-radius: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   }
+
   .auth-container h2 {
     text-align: center;
     margin-bottom: 1.5rem;
     color: #0D3F31;
-    font-size: 1.8rem;
+    font-size: 2rem;
+    font-weight: 700;
   }
+
   .auth-container form {
     display: flex;
     flex-direction: column;
-    gap: 1.2rem;
+    gap: 1rem;
   }
+
   .auth-container label {
     font-weight: 500;
     color: #333;
   }
+
   .auth-container input {
     padding: 0.7rem;
     border: 1px solid #ccc;
-    border-radius: 8px;
+    border-radius: 10px;
     font-size: 1rem;
   }
+
   .auth-container button {
     background: #0D6E3E;
     color: white;
@@ -44,29 +59,93 @@
     cursor: pointer;
     transition: background 0.3s ease;
   }
+
   .auth-container button:hover {
     background: #095C34;
   }
-  .auth-container .bottom-link {
+
+  .divider {
     text-align: center;
-    margin-top: 1rem;
+    margin: 1.5rem 0;
+    color: #aaa;
+    position: relative;
   }
-  .auth-container .bottom-link a {
-    color: #FB7E2B;
+
+  .divider::before, .divider::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 40%;
+    height: 1px;
+    background: #ddd;
+  }
+
+  .divider::before { left: 0; }
+  .divider::after { right: 0; }
+
+  .google-btn {
+    background-color: white;
+    border: 1px solid #ccc;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0.9rem;
+    width: 100%;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 10px;
+    cursor: pointer;
     text-decoration: none;
+  }
+
+  .google-btn img {
+    width: 20px;
+  }
+
+  .bottom-link {
+    text-align: center;
+    margin-top: 1.2rem;
+    font-size: 0.95rem;
+  }
+
+  .bottom-link a {
+    color: #FB7E2B;
     font-weight: 500;
+    text-decoration: none;
+  }
+
+  .bottom-link a:hover {
+    text-decoration: underline;
   }
 </style>
 
 <div class="auth-container">
-  <h2>Login</h2>
+  <h2>เข้าสู่ระบบ</h2>
+
   <form method="POST">
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Login</button>
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% for error in field.errors %}
+        <div style="color: red; font-size: 0.85rem;">{{ error }}</div>
+      {% endfor %}
+    {% endfor %}
+    <button type="submit">เข้าสู่ระบบ</button>
   </form>
+
+  <div class="divider">หรือ</div>
+
+  <a href="{% provider_login_url 'google' %}?process=login" class="google-btn">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
+    เข้าสู่ระบบด้วยบัญชี Google
+  </a>
+
   <div class="bottom-link">
-    Don't have an account? <a href="{% url 'signup' %}">Sign up here</a>
+    ยังไม่มีบัญชีใช่ไหม? <a href="{% url 'signup' %}">สมัครสมาชิก</a>
   </div>
 </div>
 {% endblock %}

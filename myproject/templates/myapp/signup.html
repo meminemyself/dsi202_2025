@@ -1,8 +1,15 @@
 {% extends 'base.html' %}
-{% block title %}Sign Up | PLOOKJING{% endblock %}
+{% block title %}สมัครสมาชิก | PLOOKJING{% endblock %}
 
 {% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
+
 <style>
+  body {
+    background: linear-gradient(to bottom right, #E4F3F0, #FFF6E8);
+    font-family: 'Prompt', sans-serif;
+  }
+
   .signup-container {
     max-width: 500px;
     margin: 3rem auto;
@@ -10,13 +17,12 @@
     background: white;
     border-radius: 20px;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.06);
-    font-family: 'Prompt', sans-serif;
   }
 
   .signup-container h2 {
     text-align: center;
     font-size: 2rem;
-    color: var(--green-dark);
+    color: #0D3F31;
     margin-bottom: 2rem;
   }
 
@@ -63,23 +69,33 @@
   .already {
     text-align: center;
     margin-top: 1rem;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
   }
 
   .already a {
-    color: var(--green-dark);
+    color: #0D3F31;
     text-decoration: underline;
+    font-weight: 500;
+  }
+
+  .already a:hover {
+    color: #FB7E2B;
   }
 </style>
 
 <div class="signup-container">
-  <h2>🌿 Sign Up</h2>
+  <h2>สมัครสมาชิก</h2>
   <form method="post">
     {% csrf_token %}
     {{ form.non_field_errors }}
 
     {% for field in form %}
-      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      <label for="{{ field.id_for_label }}">
+        {% if field.name == "username" %}ชื่อผู้ใช้
+        {% elif field.name == "password1" %}รหัสผ่าน
+        {% elif field.name == "password2" %}ยืนยันรหัสผ่าน
+        {% else %}{{ field.label }}{% endif %}
+      </label>
       {{ field }}
       {% if field.help_text %}
         <div class="helptext">{{ field.help_text }}</div>
@@ -89,11 +105,11 @@
       {% endfor %}
     {% endfor %}
 
-    <button type="submit">Create Account</button>
+    <button type="submit">สร้างบัญชีผู้ใช้</button>
   </form>
 
   <div class="already">
-    Already have an account? <a href="{% url 'login' %}">Log in</a>
+    มีบัญชีอยู่แล้วใช่ไหม? <a href="{% url 'login' %}">เข้าสู่ระบบ</a>
   </div>
 </div>
 {% endblock %}

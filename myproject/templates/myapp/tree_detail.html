@@ -1,21 +1,26 @@
 {% extends 'base.html' %}
 {% block title %}{{ tree.name }} | PLOOKJING{% endblock %}
-
+{% load static %} 
 {% block content %}
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600&display=swap" rel="stylesheet">
 <style>
+  body {
+    font-family: 'Prompt', sans-serif;
+    background-color: #F3F6F9;
+  }
+
   .detail-page {
-    max-width: 1200px;
+    max-width: 1080px;
     margin: 2rem auto;
     padding: 1rem;
     display: flex;
+    flex-wrap: wrap;
     gap: 2rem;
-    font-family: 'Prompt', sans-serif;
   }
 
   .tree-image {
-    flex: 1;
-    background: #fff;
+    flex: 1 1 420px;
+    background: white;
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 6px 18px rgba(0,0,0,0.1);
@@ -23,13 +28,13 @@
 
   .tree-image img {
     width: 100%;
-    height: 500px;
+    aspect-ratio: 1 / 1;
     object-fit: cover;
   }
 
   .tree-info {
-    flex: 1;
-    background: #fff;
+    flex: 1 1 420px;
+    background: white;
     border-radius: 16px;
     padding: 2rem;
     box-shadow: 0 6px 18px rgba(0,0,0,0.1);
@@ -39,63 +44,50 @@
   }
 
   .tree-info h1 {
-    font-size: 2.2rem;
+    font-size: 2rem;
     font-weight: bold;
     color: #0D3F31;
     margin-bottom: 0.75rem;
   }
 
-  .rating {
-    color: #FFD700;
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
-  }
-
   .price {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     color: #D55E02;
     font-weight: bold;
     margin-bottom: 1rem;
   }
 
-  .desc {
+  .desc-container {
     font-size: 1rem;
     color: #444;
-    margin-bottom: 1.5rem;
     line-height: 1.6;
   }
 
-  .features {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
+  .desc {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
   }
 
-  .feature-box {
-    background: #E6F4EA;
-    color: #2F684E;
-    padding: 0.4rem 0.8rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
+  .desc.expanded {
+    -webkit-line-clamp: unset;
+    max-height: none;
   }
 
-  .quantity-label {
-    font-weight: bold;
-    color: #0D3F31;
-    margin-bottom: 0.5rem;
-    font-size: 1rem;
-    display: block;
+  .toggle-link {
+    color: #FB7E2B;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: inline-block;
+    margin-top: 0.3rem;
   }
 
   .quantity-wrapper {
     display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
   }
 
   .quantity-control {
@@ -112,16 +104,10 @@
     background-color: #FB7E2B;
     border: none;
     color: white;
-    font-size: 1.4rem;
-    font-weight: bold;
+    font-size: 1.3rem;
     width: 40px;
     height: 40px;
     cursor: pointer;
-    transition: background-color 0.2s ease;
-  }
-
-  .quantity-control button:hover {
-    background-color: #E76C1C;
   }
 
   .quantity-control input {
@@ -132,8 +118,8 @@
     font-size: 1rem;
     font-weight: bold;
     color: #0D3F31;
-    outline: none;
     background: white;
+    outline: none;
   }
 
   .quantity-control input::-webkit-outer-spin-button,
@@ -146,50 +132,55 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    margin-top: 1rem;
   }
 
-  .action-buttons button.add-to-cart,
-  .action-buttons a.buy-now {
+  .action-buttons button,
+  .action-buttons a {
     text-align: center;
     padding: 0.9rem;
     font-weight: 600;
     border-radius: 10px;
-    transition: all 0.3s;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     font-size: 1rem;
     text-decoration: none;
-    display: block;
     width: 100%;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   }
 
-  .action-buttons button.add-to-cart {
+  .add-to-cart {
     background-color: #0D6E3E;
     color: white;
     border: none;
     cursor: pointer;
   }
 
-  .action-buttons button.add-to-cart:hover {
+  .add-to-cart:hover {
     background-color: #095C34;
   }
 
-  .action-buttons a.buy-now {
+  .buy-now {
     background-color: #FB7E2B;
     color: white;
   }
 
-  .action-buttons a.buy-now:hover {
+  .buy-now:hover {
     background-color: #E76C1C;
   }
 </style>
 
 <script>
   function changeQty(delta) {
-    const qtyInput = document.getElementById("qty");
-    let current = parseInt(qtyInput.value) || 1;
-    current += delta;
-    if (current < 1) current = 1;
-    qtyInput.value = current;
+    const input = document.getElementById("qty");
+    let qty = parseInt(input.value) || 1;
+    qty = Math.max(1, qty + delta);
+    input.value = qty;
+  }
+
+  function toggleDesc() {
+    const desc = document.getElementById("desc");
+    const link = document.getElementById("toggleLink");
+    desc.classList.toggle("expanded");
+    link.textContent = desc.classList.contains("expanded") ? "ย่อข้อความ" : "อ่านเพิ่มเติม...";
   }
 </script>
 
@@ -198,64 +189,34 @@
     {% if tree.image_url %}
       <img src="{{ tree.image_url }}" alt="{{ tree.name }}">
     {% else %}
-      <div class="w-full h-[500px] flex items-center justify-center text-gray-500 bg-gray-100">
-        No Image Available
-      </div>
+      <img src="{% static 'images/default_tree.jpg' %}" alt="ไม่มีรูปภาพ">
     {% endif %}
   </div>
 
   <div class="tree-info">
     <div>
       <h1>{{ tree.name }}</h1>
-      <div class="rating">
-        ★ {{ tree.average_rating|floatformat:1 }}
-        <span class="text-sm text-gray-500">({{ tree.review_count }} reviews)</span>
-      </div>
       <div class="price">{{ tree.price|floatformat:2 }} บาท</div>
-      <div class="desc">{{ tree.description }}</div>
-
-      {% if tag_list %}
-      <div class="features">
-        {% for tag in tag_list %}
-          <div class="feature-box">{{ tag }}</div>
-        {% endfor %}
+      <div class="desc-container">
+        <span id="desc" class="desc">{{ tree.description }}</span>
+        <div id="toggleLink" class="toggle-link" onclick="toggleDesc()">อ่านเพิ่มเติม...</div>
       </div>
-      {% endif %}
     </div>
 
     <form action="{% url 'add_to_cart' 'tree' tree.id %}" method="post">
       {% csrf_token %}
-      <div style="display: flex; justify-content: flex-end; margin-bottom: 1.5rem;">
-        <div>
-          <label for="qty" class="quantity-label" style="text-align: right;">
-          <div class="quantity-control" style="width: fit-content; min-width: 120px;">
-            <button type="button" onclick="changeQty(-1)">−</button>
-            <input type="number" id="qty" name="quantity" value="1" min="1">
-            <button type="button" onclick="changeQty(1)">+</button>
-          </div>
+      <div class="quantity-wrapper">
+        <div class="quantity-control">
+          <button type="button" onclick="changeQty(-1)">−</button>
+          <input type="number" id="qty" name="quantity" value="1" min="1">
+          <button type="button" onclick="changeQty(1)">+</button>
         </div>
       </div>
-    
       <div class="action-buttons">
-        <button type="submit" class="add-to-cart">Add to Cart</button>
-        <a href="{% url 'select_location_for_tree' tree.id %}" class="buy-now">Buy Now</a>
+        <button type="submit" class="add-to-cart">เพิ่มลงตะกร้า</button>
+        <a href="{% url 'select_location_for_tree' tree.id %}" class="buy-now">ปลูกเลย</a>
       </div>
     </form>
-  </div>
-</div>
-
-<div style="margin-top: 3rem;">
-  <h2 style="color: var(--green-dark); font-size: 1.4rem; margin-bottom: 1rem;">🌱 ต้นไม้ที่คล้ายกัน</h2>
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
-    {% for t in similar_trees %}
-      <a href="{% url 'tree_detail' t.id %}" style="text-decoration: none; color: inherit; background: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); overflow: hidden; transition: transform 0.3s;">
-        <img src="{{ t.image_url }}" alt="{{ t.name }}" style="width: 100%; height: 160px; object-fit: cover;">
-        <div style="padding: 1rem;">
-          <h3 style="margin: 0; font-size: 1rem; color: #0D3F31;">{{ t.name }}</h3>
-          <p style="font-size: 0.9rem; color: #D55E02;">{{ t.price }} บาท</p>
-        </div>
-      </a>
-    {% endfor %}
   </div>
 </div>
 {% endblock %}

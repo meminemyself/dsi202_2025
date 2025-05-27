@@ -24,14 +24,25 @@ class PlantingLocation(models.Model):
         return self.name
 
 class UserPlanting(models.Model):
+    STATUS_CHOICES = [
+        ('verifying', 'กำลังตรวจสอบ'),
+        ('in_progress', 'กำลังดำเนินการ'),
+        ('completed', 'ปลูกสำเร็จแล้ว'),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     tree = models.ForeignKey(Tree, on_delete=models.CASCADE)
     location = models.ForeignKey(PlantingLocation, on_delete=models.CASCADE)
     planting_date = models.DateTimeField(auto_now_add=True)
-    is_completed = models.BooleanField(default=False)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='verifying')
+    order_number = models.CharField(max_length=50, blank=True, null=True)
+    payment_slip = models.ImageField(upload_to='tree_slips/', blank=True, null=True)
 
     def __str__(self):
         return f"{self.user.username} planted {self.tree.name} at {self.location.name}"
+
+    def get_status_display(self):
+        return dict(self.STATUS_CHOICES).get(self.status, 'ไม่ทราบสถานะ')
 
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -45,7 +56,7 @@ class Notification(models.Model):
 class NewsArticle(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
-    image_url = models.URLField()
+    image = models.ImageField(upload_to='news_images/', blank=True, null=True)
     article_url = models.URLField()
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -108,3 +119,25 @@ class PurchaseItem(models.Model):
     tree = models.ForeignKey(Tree, null=True, blank=True, on_delete=models.SET_NULL)
     equipment = models.ForeignKey(Equipment, null=True, blank=True, on_delete=models.SET_NULL)
     quantity = models.IntegerField(default=1)
+
+class TreePaymentSlip(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    tree = models.ForeignKey("Tree", on_delete=models.CASCADE)  # ← ใช้ชื่อ model เป็น string
+    image = models.ImageField(upload_to='tree_slips/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"สลิป {self.tree.name} โดย {self.user.username}"
+    
+# models.py
+from django.db import models
+from django.contrib.auth.models import User
+
+class Notification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    notification_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"[{'✔' if self.is_read else '❗'}] {self.user.username} - {self.message[:30]}"
